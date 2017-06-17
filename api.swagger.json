@@ -1,0 +1,4811 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "2.0",
+    "title": "Marathon REST API"
+  },
+  "basePath": "../",
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/apps": {
+      "post": {
+        "description": "Create and start a new application.\nNote&#58;  This operation will create a deployment. The operation finishes, if the deployment succeeds. You can query the deployments endoint to see the status of the deployment.",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/app.App"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A deployment is started which has a unique deployment identifier. The related deployment can be fetched from the /v2/deployments endpoint. If the deployement is gone from the list of deployments, it means that it is finished. As long as the deployment runs, the effect of that change operation is visible only partially.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "201": {
+            "description": "The application has been created and a deployment is started."
+          },
+          "400": {
+            "description": "The application definition provided in the body is not valid.",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "409": {
+            "description": "There is an already deployed application with this name",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "422": {
+            "description": "The entity send can not be preocessed, since there are validation errors",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "description": "Change multiple existing applications by applying a patch. All instances of these applications get replaced by the new version. The order of dependencies will be applied correctly. Each upgradeStrategy defines the behaviour of the upgrade for the related app.\nThe whole operation fails if the IDs of one or more applications are unknown. The order of dependencies will be applied correctly.\nIf you have more complex scenarios with upgrades, use the groups endpoint.\nNote&#58;  This operation will create a deployment. The operation finishes, if the deployment succeeds. You can query the deployments endoint to see the status of the deployment.",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/app.App"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A deployment is started which has a unique deployment identifier. The related deployment can be fetched from the /v2/deployments endpoint. If the deployement is gone from the list of deployments, it means that it is finished. As long as the deployment runs, the effect of that change operation is visible only partially.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "400": {
+            "description": "The application definition provided in the body is not valid.",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "409": {
+            "description": "One or more specified applications is currently locked by a deployment",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "422": {
+            "description": "The entity send can not be processed, since there are validation errors",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "Change multiple applications either by upgrading existing ones or creating new ones. If there is an update to an already running application, the application gets upgraded. All instances of this application get replaced by the new version. The order of dependencies will be applied correctly. The upgradeStrategy defines the behaviour of the upgrade.\nIf the id of the application is not known, the application gets started. The order of dependencies will be applied correctly. It is possible to mix upgrades and installs.\nIf you have more complex scenarios with upgrades, use the groups endpoint.\nNote&#58;  This operation will create a deployment. The operation finishes, if the deployment succeeds. You can query the deployments endoint to see the status of the deployment.",
+        "parameters": [
+          {
+            "name": "partialUpdate",
+            "in": "query",
+            "description": "Without specifying this parameter, this method has a patch like semantic:\nAll values that are not defined in the json, will not change existing values.\nThis was the default behaviour in previous Marathon versions.\nFor backward compatibility, we will not change this behaviour, but let users opt in for a proper PUT.\nNote: We will change the default behaviour in the next Marathon version to support PATCH and PUT as HTTP methods.\n",
+            "required": false,
+            "default": "true",
+            "type": "string"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/app.App"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A deployment is started which has a unique deployment identifier. The related deployment can be fetched from the /v2/deployments endpoint. If the deployement is gone from the list of deployments, it means that it is finished. As long as the deployment runs, the effect of that change operation is visible only partially.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "400": {
+            "description": "The application definition provided in the body is not valid.",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "409": {
+            "description": "There is an already deployed application with this name",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "422": {
+            "description": "The entity send can not be preocessed, since there are validation errors",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Get the list of running applications. Several filters can be applied via the following query parameters.",
+        "parameters": [
+          {
+            "name": "cmd",
+            "in": "query",
+            "description": "Filter the result to only return apps whose `cmd` field contains the given value",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Filter the result to only return apps whose `id` is or contains the given value",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "label",
+            "in": "query",
+            "description": "A label selector query contains one or more label selectors, which are comma separated. Marathon supports three types of selectors existence-based, equality-based and set-based. In the case of multiple selectors, all must be satisfied so comma separator acts as an AND logical operator. Labels and values must consist of alphanumeric characters plus `-` `_` and `.` `-A-Za-z0-9_.`. Any other character is possible, but must be escaped with a backslash character.\n* <code>Existence based Selector Query</code> Matches the existence of a label <br/> Example&#58; my_label,environment\n* <code>Equality based Selector Query</code> Matches existence of labels and the (non) equality of the value.<br/> Example&#58; environment==production, tier!=frontend\n* <code>Set based Selector Query</code> Matches existence of labels and the (non) existence of the value in a given set<br/> Example&#58; environment in (stage,production), tier notin (frontend, service)",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "embed",
+            "in": "query",
+            "description": "Embeds nested resources that match the supplied path. You can specify this parameter multiple times with different values.\n- <code>apps.tasks</code> embed all tasks of each application<br/> Note&#58; if this embed is definded, it automatically sets <code>apps.deployments</code> but this will change in a future release. Please define all embeds explicitly.\n- <code>apps.counts</code> embed all task counts (tasksStaged, tasksRunning, tasksHealthy, tasksUnhealthy) <br/> Note&#58; currently embedded by default but this will change in a future release. Please define all embeds explicitly.\n- <code>apps.deployments</code> embed all deployment identifier, if the related app currently is in deployment.\n- <code>apps.readiness</code> embed all readiness check results\n- <code>apps.lastTaskFailure</code> embeds the lastTaskFailure for the application if there is one.\n- <code>apps.failures</code> Shorthand for apps.lastTaskFailure, apps.tasks, apps.counts and apps.deployments.<br/> Note&#58; deprecated and will be removed in future versions Please define all embeds explicitly.\n- <code>apps.taskStats</code> exposes task statistics in the JSON.",
+            "required": false,
+            "enum": [
+              "apps.tasks",
+              "apps.count",
+              "apps.deployments",
+              "apps.lastTaskFailure",
+              "apps.failures",
+              "apps.taskStats"
+            ],
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of applications that match the defined filters"
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          }
+        }
+      }
+    },
+    "/v2/apps/{app_id}": {
+      "parameters": [
+        {
+          "name": "app_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "delete": {
+        "description": "Destroy an application. All data about that application will be deleted.\nNote&#58;  This operation will create a deployment. The operation finishes, if the deployment succeeds. You can query the deployments endoint to see the status of the deployment.",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A deployment is started which has a unique deployment identifier. The related deployment can be fetched from the /v2/deployments endpoint. If the deployement is gone from the list of deployments, it means that it is finished. As long as the deployment runs, the effect of that change operation is visible only partially.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "No app with this id known.",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "409": {
+            "description": "There is an already running deployment, that affects this application. To override this deployment, use the force=true flag"
+          }
+        }
+      },
+      "patch": {
+        "description": "Replaces parameters of a running application. All running instances get upgraded to the new definition. Any given application ID will be ignored.\nNote&#58;  This operation will create a deployment. The operation finishes, if the deployment succeeds. You can query the deployments endoint to see the status of the deployment.",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/app.App"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The application has been updated and a deployment is started.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "400": {
+            "description": "The application definition provided in the body is not valid.",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "No task found with this `app_id`.",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "409": {
+            "description": "There is an already running deployment, that affects this application. To override this deployment, use the force=true flag"
+          },
+          "422": {
+            "description": "The entity sent can not be preocessed, since there are validation errors",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "Replaces parameters of a running application. If no application with the given id exists, it will be created. If there is an application with this id, all running instances get upgraded to the new definition.\n\nNote&#58;  This operation will create a deployment. The operation finishes, if the deployment succeeds. You can query the deployments endoint to see the status of the deployment.",
+        "parameters": [
+          {
+            "name": "partialUpdate",
+            "in": "query",
+            "description": "Without specifying this parameter, this method has a patch like semantic:\nAll values that are not defined in the json, will not change existing values.\nThis was the default behaviour in previous Marathon versions.\nFor backward compatibility, we will not change this behaviour, but let users opt in for a proper PUT.\nNote: We will change the default behaviour in the next Marathon version to support PATCH and PUT as HTTP methods.\n",
+            "required": false,
+            "default": "true",
+            "type": "string"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/app.App"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A deployment is started which has a unique deployment identifier. The related deployment can be fetched from the /v2/deployments endpoint. If the deployement is gone from the list of deployments, it means that it is finished. As long as the deployment runs, the effect of that change operation is visible only partially.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "201": {
+            "description": "The application has been created and a deployment is started."
+          },
+          "400": {
+            "description": "The application definition provided in the body is not valid.",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "No task found with this `app_id`.",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "409": {
+            "description": "There is an already running deployment, that affects this application. To override this deployment, use the force=true flag"
+          },
+          "422": {
+            "description": "The entity sent can not be preocessed, since there are validation errors",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Get the application with id `app_id`. The response includes some status information besides the current configuration of the app. You can specify optional embed arguments, to get more embedded information.",
+        "parameters": [
+          {
+            "name": "embed",
+            "in": "query",
+            "description": "Embeds nested resources that match the supplied path. You can specify this parameter multiple times with different values. <br/>\n- <code>app.tasks</code>. embed tasks Note&#58; if this embed is definded, it automatically sets <code>apps.deployments</code> but this will change in a future release. Please define all embeds explicitly.\n- <code>app.counts</code>. embed all task counts (tasksStaged, tasksRunning, tasksHealthy, tasksUnhealthy) <br/> Note&#58; currently embedded by default but this will change in a future release. Please define all embeds explicitly.\n- <code>app.deployments</code>. embed all deployment identifier, if the related app currently is in deployment.\n- <code>app.readiness</code> embed all readiness check results\n- <code>app.lastTaskFailure</code> embeds the lastTaskFailure for the application if there is one.\n- <code>app.failures</code> Shorthand for apps.lastTaskFailure, apps.tasks, apps.counts and apps.deployments.<br/> Note&#58; deprecated and will be removed in future versions Please define all embeds explicitly.\n- <code>app.taskStats</code> exposes task statistics in the JSON.",
+            "required": true,
+            "enum": [
+              "app.tasks",
+              "app.count",
+              "app.deployments",
+              "app.lastTaskFailure",
+              "app.failures",
+              "app.taskStats"
+            ],
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "No task found with this `app_id`.",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          }
+        }
+      }
+    },
+    "/v2/apps/{app_id}/restart": {
+      "parameters": [
+        {
+          "name": "app_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "post": {
+        "description": "Restart all tasks of this application.",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A deployment is started which has a unique deployment identifier. The related deployment can be fetched from the /v2/deployments endpoint. If the deployement is gone from the list of deployments, it means that it is finished. As long as the deployment runs, the effect of that change operation is visible only partially.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "No task found with this `app_id`.",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "409": {
+            "description": "There is an already running deployment, that affects this application. To override this deployment, use the force=true flag"
+          }
+        }
+      }
+    },
+    "/v2/apps/{app_id}/tasks": {
+      "parameters": [
+        {
+          "name": "app_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "delete": {
+        "description": "Kill tasks that belong to the application `app_id`",
+        "parameters": [
+          {
+            "name": "host",
+            "in": "query",
+            "description": "all tasks of that application on the supplied slave are killed",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "scale",
+            "in": "query",
+            "description": "If `scale=true` is specified, then the application is scaled down by the number of killed tasks. Only possible if `wipe=false` or not specified.",
+            "required": true,
+            "default": "false",
+            "type": "string"
+          },
+          {
+            "name": "wipe",
+            "in": "query",
+            "description": "If `wipe=true` is specified and the app uses local persistent volumes, associated dynamic reservations will be unreserved, and persistent volumes will be destroyed. Only possible if `scale=false` or not specified.",
+            "required": true,
+            "default": "false",
+            "type": "string"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "If scale=false, all tasks that were killed are returned. If scale=true, than a deployment is triggered and the deployment is returned.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "No task found with this `app_id`."
+          },
+          "409": {
+            "description": "There is an already running deployment, that affects this application. To override this deployment, use the force=true flag"
+          }
+        }
+      },
+      "get": {
+        "description": "List all running tasks for application `app_id`.",
+        "produces": [
+          "text/plain"
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of running tasks for application `app_id`."
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "No task found with this `app_id`."
+          }
+        }
+      }
+    },
+    "/v2/apps/{app_id}/tasks/{task_id}": {
+      "parameters": [
+        {
+          "name": "app_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "task_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "delete": {
+        "description": "Kill the task with ID `task_id` that belongs to the application `app_id`.",
+        "parameters": [
+          {
+            "name": "scale",
+            "in": "query",
+            "description": "If `scale=true` is specified, then the application is scaled down by the number of killed tasks. Only possible if `wipe=false` or not specified.",
+            "required": true,
+            "default": "false",
+            "type": "string"
+          },
+          {
+            "name": "wipe",
+            "in": "query",
+            "description": "If `wipe=true` is specified and the app uses local persistent volumes, associated dynamic reservations will be unreserved, and persistent volumes will be destroyed. Only possible if `scale=false` or not specified.",
+            "required": true,
+            "default": "false",
+            "type": "string"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "If scale=false, the task that was killed is returned. If scale=true, than a deployment is triggered and the deployment is returned.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "No task found with this task_id.",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "409": {
+            "description": "There is an already running deployment, that affects this application. To override this deployment, use the force=true flag"
+          }
+        }
+      }
+    },
+    "/v2/apps/{app_id}/versions": {
+      "parameters": [
+        {
+          "name": "app_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "get": {
+        "description": "List the versions of the application with id `app_id`",
+        "responses": {
+          "200": {
+            "description": "The list of versions of the application"
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "No task found with this `app_id`.",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          }
+        }
+      }
+    },
+    "/v2/apps/{app_id}/versions/{version}": {
+      "parameters": [
+        {
+          "name": "app_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "get": {
+        "description": "List the configuration of the application with id `app_id` at version `version`.",
+        "responses": {
+          "200": {
+            "description": "The application definition at that point in time.",
+            "schema": {
+              "$ref": "#/definitions/app.App"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "No task found with this `app_id`."
+          }
+        }
+      }
+    },
+    "/v2/pods/": {
+      "get": {
+        "description": "List all the pod-based services in the system.\n",
+        "responses": {
+          "200": {
+            "description": "Yields a list of all pods in the system.\nUseful to perform backups of all pods registered with Marathon.\n",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/pod.Pod"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          }
+        }
+      },
+      "post": {
+        "description": "Create and start a new pod-based service.\n",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/pod.Pod"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Pod created successfully.",
+            "schema": {
+              "$ref": "#/definitions/pod.Pod"
+            },
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "This operation will create a deployment. The operation finishes, if the deployment succeeds.\nYou can query the deployments endoint with this id to see the status of the deployment.\n"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON syntax."
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "409": {
+            "description": "Duplicate object ID. Another app, group, or pod already exists for the specified ID.\n"
+          },
+          "422": {
+            "description": "Invalid object specification, one or more specification rules have been violated.\n"
+          }
+        }
+      },
+      "head": {
+        "description": "Determine if this variant of Marathon supports pods.\nAlways generates HTTP OK.\n",
+        "responses": {
+          "200": {
+            "description": "The body of a successful response will be empty.\n"
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          }
+        }
+      }
+    },
+    "/v2/pods/::status": {
+      "get": {
+        "description": "Get the status for all pods",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/podStatus.PodStatus"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "Unknown object ID. No such app, group, or pod exists for the specified ID.\n"
+          }
+        }
+      }
+    },
+    "/v2/pods/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "The path of the pod",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "get": {
+        "description": "Get the pod at the given id\n",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/pod.Pod"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "Unknown object ID. No such app, group, or pod exists for the specified ID.\n"
+          }
+        }
+      },
+      "put": {
+        "description": "Update an existing pod-based service.\n",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one pod at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/pod.Pod"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The pod has been updated and a deployment is started.",
+            "schema": {
+              "$ref": "#/definitions/pod.Pod"
+            },
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "This operation will create a deployment. The operation finishes, if the deployment succeeds.\nYou can query the deployments endoint with this id to see the status of the deployment.\n"
+              }
+            }
+          },
+          "400": {
+            "description": "The given podId does not match the id in the pod specification.",
+            "schema": {
+              "$ref": "#/definitions/error.Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "Unknown object ID. No such app, group, or pod exists for the specified ID.\n"
+          },
+          "422": {
+            "description": "Invalid object specification, one or more specification rules have been violated.\n"
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete an existing pod-based service.\n",
+        "responses": {
+          "202": {
+            "description": "",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "This operation will create a deployment. The operation finishes, if the deployment succeeds.\nYou can query the deployments endoint with this id to see the status of the deployment.\n"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "Unknown object ID. No such app, group, or pod exists for the specified ID.\n"
+          }
+        }
+      }
+    },
+    "/v2/pods/{id}::status": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "The path of the pod",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "get": {
+        "description": "Get the status of the pod with the given id\n",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/podStatus.PodStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "Unknown object ID. No such app, group, or pod exists for the specified ID.\n"
+          }
+        }
+      }
+    },
+    "/v2/pods/{id}::versions": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "The path of the pod",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "get": {
+        "description": "List the versions of this pod.\n",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "Unknown object ID. No such app, group, or pod exists for the specified ID.\n"
+          }
+        }
+      }
+    },
+    "/v2/pods/{id}::versions/{version}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "The path of the pod",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "in": "path",
+          "description": "The version of the pod",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "get": {
+        "description": "List the versions of this pod.\n",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/pod.Pod"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "Unknown object ID. No such app, group, or pod exists for the specified ID.\n"
+          }
+        }
+      }
+    },
+    "/v2/pods/{id}::instances/{instance}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "The path of the pod",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "instance",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "delete": {
+        "description": "Kill the given instance of the pod\n",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/podStatus.PodInstanceStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "Unknown object ID. No such app, group, or pod exists for the specified ID.\n"
+          }
+        }
+      }
+    },
+    "/v2/pods/{id}::instances": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "The path of the pod",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "delete": {
+        "description": "Kill the given instances of the pod\n",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(.+)\\.(instance-|marathon-)([^\\.]+)$"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/podStatus.PodInstanceStatus"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "Unknown object ID. No such app, group, or pod exists for the specified ID.\n"
+          }
+        }
+      }
+    },
+    "/v2/deployments": {
+      "get": {
+        "description": "List all running deployments. A deployment is a change in the service setup.\nA deployment is identified by an id, affects a set of applications and is composed of deployment steps.\nEvery step contains a list of actions with following types\n* <code>StartApplication</code> starts an application, which is currently not running.\n* <code>StopApplication</code> stops an already running application.\n* <code>ScaleApplication</code> changes the number of instances of an application and allows to kill specified instances while scaling.\n* <code>RestartApplication</code> upgrades an already deployed application with a new version.\n* <code>StartPod</code> starts a pod, which is currently not running.\n* <code>StopPod</code> stops an already running pod.\n* <code>ScalePod</code> changes the number of instances of an pod and allows to kill specified instances while scaling.\n* <code>RestartPod</code> upgrades an already deployed pod with a new version.\n* <code>ResolveArtifacts</code> Resolve all artifacts of an application",
+        "responses": {
+          "200": {
+            "description": "The list of all running deployments."
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          }
+        }
+      }
+    },
+    "/v2/deployments/{deployment_id}": {
+      "parameters": [
+        {
+          "name": "deployment_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "delete": {
+        "description": "Revert the deployment with `deployment_id` by creating a new deployment which reverses all changes.",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "description": "If set to <code>false</code> (the default) then the deployment is canceled and a new deployment is created to revert the changes of this deployment. Without concurrent deployments, this restores the configuration before this deployment. If set to <code>true</code>, then the deployment is still canceled but no rollback deployment is created. <br><br> **Warning** - Using <code>force=true</code> to abort a deployment can leave behind unaccounted for tasks and/or leave the app in a mixed state of old and new versions of tasks!",
+            "required": true,
+            "type": "boolean",
+            "default": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A deployment is started which has a unique deployment identifier. The related deployment can be fetched from the /v2/deployments endpoint. If the deployement is gone from the list of deployments, it means that it is finished. As long as the deployment runs, the effect of that change operation is visible only partially."
+          },
+          "202": {
+            "description": "If the force flag is set to true, the deployment is canceled and no new deployment is triggered. In this case no body is returned."
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "The deployment plan with the given id can not be found."
+          }
+        }
+      }
+    },
+    "/v2/groups/": {
+      "delete": {
+        "description": "Destroy a group. All data about that group and all associated applications will be deleted. The failure or success of the action is signalled via events. There is a group_change_success and group_change_failed with the given version.",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A deployment is started which has a unique deployment identifier. The related deployment can be fetched from the /v2/deployments endpoint. If the deployement is gone from the list of deployments, it means that it is finished. As long as the deployment runs, the effect of that change operation is visible only partially.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "409": {
+            "description": "There is an already running deployment, that affects this application. To override this deployment, use the force=true flag"
+          }
+        }
+      },
+      "post": {
+        "description": "Create and start a new application group. Application groups can contain other application groups.",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/group.GroupUpdate"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A deployment is started which has a unique deployment identifier. The related deployment can be fetched from the /v2/deployments endpoint. If the deployement is gone from the list of deployments, it means that it is finished. As long as the deployment runs, the effect of that change operation is visible only partially.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "400": {
+            "description": "The group definition provided in the body is not valid."
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "409": {
+            "description": "There is an already deployed group with this name"
+          },
+          "422": {
+            "description": "The entity send can not be preocessed, since there are validation errors"
+          }
+        }
+      },
+      "put": {
+        "description": "Change parameters of a deployed application group. The new group parameters get applied.\n\n* Changes to application parameters will result in a restart of this application.\n* A new application added to the group will be started.\n* An existing application removed from the group will be stopped.\n\nIf there are no changes to the application definition, no restart is triggered. During restart marathon keeps track, that the configured amount of minimal running instances are _always_ available.\nThis method allows 2 special modes for the update operation>\n\n* Provide only the `version` field in the group definition. This will rollback the group to that given version\n* Provide only the `scaleBy` field will scale all transitive applications instance counts by the given factor.\n\nWhen one of version or scaleBy are set, nothing else than a version change or transitive instance count scaling will be applied. If both version and scaleBy are set, only a version rollback will be performed – the scaleBy value will not be applied.\nA deployment can run forever. This is the case, when the new application has a problem and does not become healthy. In this case, human interaction is needed with 2 possible choices\n\n* Rollback to an existing older version\n* Update with a newer version of the group which does not have the problems of the old one.\n\nSince the deployment of the group can take a considerable amount of time, this endpoint returns immediately with a version. The failure or success of the action is signalled via event. There is a group_change_success and group_change_failed with the given version.",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/group.Group"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A deployment is started which has a unique deployment identifier. The related deployment can be fetched from the /v2/deployments endpoint. If the deployement is gone from the list of deployments, it means that it is finished. As long as the deployment runs, the effect of that change operation is visible only partially.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "400": {
+            "description": "The group definition provided in the body is not valid."
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "409": {
+            "description": "There is an already running deployment, that affects this application. To override this deployment, use the force=true flag"
+          },
+          "422": {
+            "description": "The entity send can not be preocessed, since there are validation errors"
+          }
+        }
+      },
+      "get": {
+        "description": "Get the group with all applications and all transitive child groups.",
+        "parameters": [
+          {
+            "name": "embed",
+            "in": "query",
+            "description": "Embeds nested resources that match the supplied path. You can specify this parameter multiple times with different values. Unknown embed parameters are ignored. If you omit this parameter, it defaults to <code>group.groups</code>, <code>group.apps</code>\n- <code>group.groups</code> embed all child groups of each group<br/>\n- <code>group.apps</code> embed all apps of each group<br/>\n- <code>group.apps.tasks</code> embed all tasks of each application<br/>\n- <code>group.apps.counts</code> embed all task counts (tasksStaged, tasksRunning, tasksHealthy, tasksUnhealthy) <br/>\n- <code>group.apps.deployments</code> embed all deployment identifier, if the related app currently is in deployment.\n- <code>group.apps.readiness</code> embed all readiness check results\n- <code>group.apps.lastTaskFailure</code> embeds the lastTaskFailure for the application if there is one.\n- <code>group.apps.taskStats</code> exposes task statistics in the JSON.",
+            "required": false,
+            "enum": [
+              "group.groups",
+              "group.apps",
+              "group.apps.tasks",
+              "group.apps.count",
+              "group.apps.deployments",
+              "group.apps.lastTaskFailure",
+              "group.apps.failures",
+              "group.apps.taskStats"
+            ],
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The group with all transitive dependencies.",
+            "schema": {
+              "$ref": "#/definitions/group.GroupInfo"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          }
+        }
+      }
+    },
+    "/v2/groups//versions": {
+      "get": {
+        "description": "List all versions the group with the specified path.",
+        "responses": {
+          "200": {
+            "description": "List all available versions of that group."
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          }
+        }
+      }
+    },
+    "/v2/groups/{group_id}/": {
+      "parameters": [
+        {
+          "name": "group_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "delete": {
+        "description": "Destroy a group. All data about that group and all associated applications will be deleted. The failure or success of the action is signalled via events. There is a group_change_success and group_change_failed with the given version.",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A deployment is started which has a unique deployment identifier. The related deployment can be fetched from the /v2/deployments endpoint. If the deployement is gone from the list of deployments, it means that it is finished. As long as the deployment runs, the effect of that change operation is visible only partially.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "409": {
+            "description": "There is an already running deployment, that affects this application. To override this deployment, use the force=true flag"
+          }
+        }
+      },
+      "post": {
+        "description": "Create and start a new application group. Application groups can contain other application groups.",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/group.GroupUpdate"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A deployment is started which has a unique deployment identifier. The related deployment can be fetched from the /v2/deployments endpoint. If the deployement is gone from the list of deployments, it means that it is finished. As long as the deployment runs, the effect of that change operation is visible only partially.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "400": {
+            "description": "The group definition provided in the body is not valid."
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "409": {
+            "description": "There is an already deployed group with this name"
+          },
+          "422": {
+            "description": "The entity send can not be preocessed, since there are validation errors"
+          }
+        }
+      },
+      "put": {
+        "description": "Change parameters of a deployed application group. The new group parameters get applied.\n\n* Changes to application parameters will result in a restart of this application.\n* A new application added to the group will be started.\n* An existing application removed from the group will be stopped.\n\nIf there are no changes to the application definition, no restart is triggered. During restart marathon keeps track, that the configured amount of minimal running instances are _always_ available.\nThis method allows 2 special modes for the update operation>\n\n* Provide only the `version` field in the group definition. This will rollback the group to that given version\n* Provide only the `scaleBy` field will scale all transitive applications instance counts by the given factor.\n\nWhen one of version or scaleBy are set, nothing else than a version change or transitive instance count scaling will be applied. If both version and scaleBy are set, only a version rollback will be performed – the scaleBy value will not be applied.\nA deployment can run forever. This is the case, when the new application has a problem and does not become healthy. In this case, human interaction is needed with 2 possible choices\n\n* Rollback to an existing older version\n* Update with a newer version of the group which does not have the problems of the old one.\n\nSince the deployment of the group can take a considerable amount of time, this endpoint returns immediately with a version. The failure or success of the action is signalled via event. There is a group_change_success and group_change_failed with the given version.",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/group.Group"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A deployment is started which has a unique deployment identifier. The related deployment can be fetched from the /v2/deployments endpoint. If the deployement is gone from the list of deployments, it means that it is finished. As long as the deployment runs, the effect of that change operation is visible only partially.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "400": {
+            "description": "The group definition provided in the body is not valid."
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "409": {
+            "description": "There is an already running deployment, that affects this application. To override this deployment, use the force=true flag"
+          },
+          "422": {
+            "description": "The entity send can not be preocessed, since there are validation errors"
+          }
+        }
+      },
+      "get": {
+        "description": "Get the group with all applications and all transitive child groups.",
+        "parameters": [
+          {
+            "name": "embed",
+            "in": "query",
+            "description": "Embeds nested resources that match the supplied path. You can specify this parameter multiple times with different values. Unknown embed parameters are ignored. If you omit this parameter, it defaults to <code>group.groups</code>, <code>group.apps</code>\n- <code>group.groups</code> embed all child groups of each group<br/>\n- <code>group.apps</code> embed all apps of each group<br/>\n- <code>group.apps.tasks</code> embed all tasks of each application<br/>\n- <code>group.apps.counts</code> embed all task counts (tasksStaged, tasksRunning, tasksHealthy, tasksUnhealthy) <br/>\n- <code>group.apps.deployments</code> embed all deployment identifier, if the related app currently is in deployment.\n- <code>group.apps.readiness</code> embed all readiness check results\n- <code>group.apps.lastTaskFailure</code> embeds the lastTaskFailure for the application if there is one.\n- <code>group.apps.taskStats</code> exposes task statistics in the JSON.",
+            "required": false,
+            "enum": [
+              "group.groups",
+              "group.apps",
+              "group.apps.tasks",
+              "group.apps.count",
+              "group.apps.deployments",
+              "group.apps.lastTaskFailure",
+              "group.apps.failures",
+              "group.apps.taskStats"
+            ],
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The group with all transitive dependencies.",
+            "schema": {
+              "$ref": "#/definitions/group.GroupInfo"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          }
+        }
+      }
+    },
+    "/v2/groups/{group_id}//versions": {
+      "parameters": [
+        {
+          "name": "group_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "get": {
+        "description": "List all versions the group with the specified path.",
+        "responses": {
+          "200": {
+            "description": "List all available versions of that group."
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          }
+        }
+      }
+    },
+    "/v2/tasks": {
+      "get": {
+        "description": "List all running tasks.",
+        "produces": [
+          "text/plain"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter the list of tasks by status",
+            "required": true,
+            "enum": [
+              "running",
+              "staging"
+            ],
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of all tasks disregarding their status, or a list of tasks matching the specified status filter."
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          }
+        }
+      }
+    },
+    "/v2/tasks/delete": {
+      "post": {
+        "description": "Kill a list of running tasks.",
+        "parameters": [
+          {
+            "name": "scale",
+            "in": "query",
+            "description": "If `scale=true` is specified, then the related application is scaled down by the number of killed tasks. Only possible if `wipe=false` or not specified.",
+            "required": true,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "wipe",
+            "in": "query",
+            "description": "If `wipe=true` is specified and the app uses local persistent volumes, associated dynamic reservations will be unreserved, and persistent volumes will be destroyed. Only possible if `scale=false` or not specified.",
+            "required": true,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Only one deployment can be applied to one application at the same time. If the existing deployment should be canceled by this change, you can set force=true.\nCaution&#58; setting force=true will cancel the current deployment. This paramter should be used only, if the current deployment is unsuccessful!",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "If scale=false, all tasks that were killed are returned. If scale=true, than a deployment is triggered and the deployment is returned.",
+            "headers": {
+              "Marathon-Deployment-Id": {
+                "type": "string",
+                "description": "Resulting deployment id created by the change operation."
+              }
+            }
+          },
+          "400": {
+            "description": "There are unknown task ids, that can not be killed."
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "409": {
+            "description": "There is an already running deployment, that affects this application. To override this deployment, use the force=true flag"
+          }
+        }
+      }
+    },
+    "/v2/events": {
+      "get": {
+        "description": "Attach to the marathon event stream.\nTo use this endpoint, the client has to accept the text/event-stream content type.\nPlease note a request to this endpoint will not be closed by the server. If an event happens on the server side, this event will be propagated to the client immediately. See [Server Sent Events](http://www.w3schools.com/html/html5_serversentevents.asp) for a more detailed explanation.\nNote for ApiConsole&#58; this function will not yield the expected result from inside ApiConsole.",
+        "produces": [
+          "text/event-stream",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "event_type",
+            "in": "query",
+            "description": "Specify subscribed event types. You can specify this parameter multiple times with different values.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the list of all tasks waiting to be scheduled."
+          },
+          "405": {
+            "description": "A request has been made without the correct Accept Header"
+          }
+        }
+      }
+    },
+    "/v2/info": {
+      "get": {
+        "description": "Get info about the Marathon Instance",
+        "responses": {
+          "200": {
+            "description": "General configuration and runtime information about this Marathon instance."
+          }
+        }
+      }
+    },
+    "/v2/leader": {
+      "delete": {
+        "description": "Causes the current leader to abdicate, triggering a new election.\n\nAbdicating a Marathon instance causes this instance to exit.\nThe underlying system is responsible for restarting this instance.\n\nEvery abdication triggers a new leader election.\nThe next elected leader will read the state from the persistent store and continue the work from the previous leader.\n\nIt is possible to use this endpoint to trigger a backup or restore operation for the persistent data store.\nThe requested operation will be perfomed by the next leading Marathon master.\nCurrently two providers are allowed:\n- File provider: file:///path/to/file\n- S3 provider (experimental): s3://bucket-name/key-in-bucket?access_key=xxx&secret_key=xxx&region=eu-central-1\n  Please note: access_key and secret_key are optional.\n  If not provided, the [AWS default credentials provider chain](http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html) is used to look up aws credentials.\n",
+        "parameters": [
+          {
+            "name": "backup?",
+            "in": "query",
+            "description": "URI to backup zk state.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "restore?",
+            "in": "query",
+            "description": "URI to restore zk state.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The abdication message from the current leader."
+          },
+          "404": {
+            "description": "If there is no current leader."
+          }
+        }
+      },
+      "get": {
+        "description": "Returns the current leader.",
+        "responses": {
+          "200": {
+            "description": "The host and port of the current leading master."
+          },
+          "404": {
+            "description": "If there is no current leader."
+          }
+        }
+      }
+    },
+    "/v2/plugins": {
+      "get": {
+        "description": "Returns the list of all loaded plugins",
+        "responses": {
+          "200": {
+            "description": "The list of all loaded plugins"
+          }
+        }
+      }
+    },
+    "/v2/plugins/{plugin_id}/{path}": {
+      "parameters": [
+        {
+          "name": "plugin_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "path",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "delete": {
+        "description": "Delete request is handled by the plugin.",
+        "responses": {
+          "default": {
+            "description": "",
+            "schema": {}
+          }
+        }
+      },
+      "post": {
+        "description": "Post request is handled by the plugin.",
+        "responses": {
+          "default": {
+            "description": "",
+            "schema": {}
+          }
+        }
+      },
+      "put": {
+        "description": "Put request is handled by the plugin.",
+        "responses": {
+          "default": {
+            "description": "",
+            "schema": {}
+          }
+        }
+      },
+      "get": {
+        "description": "Get request is handled by the plugin.",
+        "responses": {
+          "default": {
+            "description": "",
+            "schema": {}
+          }
+        }
+      }
+    },
+    "/v2/queue/": {
+      "get": {
+        "description": "List all the tasks queued up or waiting to be scheduled.\nThis is mainly used for troubleshooting and occurs when scaling\nchanges are requested and the volume of scaling changes out paces the ability to schedule those tasks.\nIn addition to the application in the queue, you see also the task count that needs to be started.\nIf the task has a rate limit, then a delay to the start gets applied.\nYou can see this delay for every application with the seconds to wait before the next launch will be tried.\n",
+        "parameters": [
+          {
+            "name": "embed",
+            "in": "query",
+            "description": "Embeds nested resources that match the supplied path. You can specify this parameter multiple times with different values.\n- <code>lastUnusedOffers</code> embed all unused offers for every application.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of all tasks waiting to be scheduled.\n",
+            "schema": {
+              "$ref": "#/definitions/queue.Queue"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          }
+        }
+      }
+    },
+    "/v2/queue/{app_id}/delay": {
+      "parameters": [
+        {
+          "name": "app_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "delete": {
+        "description": "If an application fails too often in a specified amount of time (according to the application definition),\nthe task launch will be delayed.\nThis delay can be removed by calling this endpoint.\nThe effect is, that the tasks of this application will be launched immediately.\n",
+        "responses": {
+          "200": {
+            "description": "the delay is reset and no body is returned"
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "404": {
+            "description": "there is no delay for the given application with id `app_id`"
+          }
+        }
+      }
+    },
+    "/ping": {
+      "get": {
+        "description": "Ping this Marathon instance.",
+        "produces": [
+          "text/plain"
+        ],
+        "responses": {
+          "200": {
+            "description": "Every ping is answered with a pong."
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "description": "Get metrics data from this Marathon instance",
+        "responses": {
+          "200": {
+            "description": "All aggregated runtime metrics for this Marathon instance.",
+            "schema": {
+              "$ref": "#/definitions/metrics.Metrics"
+            }
+          }
+        }
+      }
+    },
+    "/logging": {
+      "post": {
+        "description": "Update a specific logger level",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/logging.LoggerChange"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "logger changed to the given logging level",
+            "schema": {
+              "$ref": "#/definitions/logging.LoggerChange"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          },
+          "422": {
+            "description": "request not understood"
+          }
+        }
+      },
+      "get": {
+        "description": "Get all configured loggers",
+        "responses": {
+          "200": {
+            "description": "All loggers in the system",
+            "schema": {
+              "$ref": "#/definitions/logging.Loggers"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Authentication is enabled and you did not provide enough or wrong information to authenticate that request."
+          },
+          "403": {
+            "description": "Forbidden. Authorization is granted but the identity provided does not have sufficient access rights to do that action."
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "app.AppResidency": {
+      "type": "object",
+      "description": "When using local persistent volumes that pin tasks onto agents,\nthese values define how Marathon handles terminal states of these tasks.\n",
+      "properties": {
+        "relaunchEscalationTimeoutSeconds": {
+          "type": "integer",
+          "default": 3600,
+          "description": "When a task using persistent local volumes cannot be restarted on the\nagent it's been pinned to, Marathon will try to launch this task on\nanother node after this timeout. Defaults to 3600 (one hour).\",\n",
+          "minimum": 0,
+          "format": "int64"
+        },
+        "taskLostBehavior": {
+          "default": "WAIT_FOREVER",
+          "$ref": "#/definitions/strings.TaskLostBehavior"
+        }
+      },
+      "required": [
+        "relaunchEscalationTimeoutSeconds",
+        "taskLostBehavior"
+      ]
+    },
+    "app.UpgradeStrategy": {
+      "type": "object",
+      "description": "During an upgrade all instances of an application get replaced by a new\nversion.\nThe upgradeStrategy controls how Marathon stops old versions and\nlaunches new versions.\n",
+      "properties": {
+        "maximumOverCapacity": {
+          "type": "number",
+          "description": "A number between 0 and 1 which is multiplied with the instance count.\nThis is the maximum number of additional instances launched at any\npoint of time during the upgrade process.\n",
+          "minimum": 0,
+          "maximum": 1,
+          "format": "double"
+        },
+        "minimumHealthCapacity": {
+          "type": "number",
+          "description": "A number between 0 and 1 that is multiplied with the instance count.\nThis is the minimum number of healthy nodes that do not sacrifice\noverall application purpose. Marathon will make sure, during the\nupgrade process, that at any point of time this number of healthy\ninstances are up.\n",
+          "minimum": 0,
+          "maximum": 1,
+          "format": "double"
+        }
+      },
+      "required": [
+        "maximumOverCapacity",
+        "minimumHealthCapacity"
+      ]
+    },
+    "app.App": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/strings.PathId"
+        },
+        "acceptedResourceRoles": {
+          "type": "array",
+          "example": [
+            "public-facing"
+          ],
+          "description": "A list of resource roles.\nMarathon considers only resource offers with roles in this list for\nlaunching tasks of this app. If you do not specify this,\nMarathon considers all resource offers with roles that have been\nconfigured by the `--default_accepted_resource_roles` command line flag.\nIf no `--default_accepted_resource_roles` was given on startup,\nMarathon considers all resource offers. To register Marathon for a role,\nyou need to specify the `--mesos_role` command line flag on startup.\nIf you want to assign all resources of a slave to a role,\nyou can use the `--default_role` argument when starting up the slave.\nIf you need a more fine-grained configuration, you can use the\n`--resources` argument to specify resource shares per role.\nSee [the Mesos attribute and resources documentation](http://mesos.apache.org/documentation/latest/attributes-resources/) for details\n",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          },
+          "x-annotation-app.pragma.forceOptional": ""
+        },
+        "args": {
+          "type": "array",
+          "description": "An array of strings that represents an alternative mode of specifying the\ncommand to run. This was motivated by safe usage of containerizer features\nlike a custom Docker ENTRYPOINT. This args field may be used in place of\ncmd even when using the default command executor.\nThis change mirrors API and semantics changes in the Mesos CommandInfo\nprotobuf message starting with version `0.20.0`.\nEither `cmd` or `args` must be supplied.\nIt is invalid to supply both `cmd` and `args` in the same app.\n",
+          "items": {
+            "type": "string"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "backoffFactor": {
+          "type": "number",
+          "default": 1.15,
+          "description": "Configures exponential backoff behavior when launching potentially sick\napps. This prevents sandboxes associated with consecutively failing tasks\nfrom filling up the hard disk on Mesos slaves.\nThe backoff period is multiplied by the factor for each consecutive\nfailure until it reaches maxLaunchDelaySeconds.\nThis applies also to tasks that are killed due to failing too\nmany health checks.\n",
+          "minimum": 1,
+          "format": "double"
+        },
+        "backoffSeconds": {
+          "type": "integer",
+          "default": 1,
+          "description": "Configures exponential backoff behavior when launching potentially sick\napps. This prevents sandboxes associated with consecutively failing tasks\nfrom filling up the hard disk on Mesos slaves.\nThe backoff period is multiplied by the factor for each consecutive\nfailure until it reaches maxLaunchDelaySeconds.\nThis applies also to tasks that are killed due to failing too\nmany health checks.\n",
+          "minimum": 0,
+          "format": "int32"
+        },
+        "cmd": {
+          "type": "string",
+          "description": "The command that is executed.  This value is wrapped by Mesos via\n`/bin/sh -c ${app.cmd}`.\nEither `cmd` or `args` must be supplied.\nIt is invalid to supply both `cmd` and `args` in the same app.\n",
+          "minLength": 1
+        },
+        "constraints": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/app.constraints.AppConstraint"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "container": {
+          "$ref": "#/definitions/app.appContainer.Container"
+        },
+        "cpus": {
+          "type": "number",
+          "default": 1,
+          "description": "The number of CPU shares this application needs per instance. This number does not have to be integer, but can be a fraction.\",\n",
+          "minimum": 0.001,
+          "format": "double"
+        },
+        "dependencies": {
+          "type": "array",
+          "description": "A list of services upon which this application depends\nAn order is derived from the dependencies for performing start/stop and\nupgrade of the application. For example, an application /a relies on the\nservices /b which itself relies on /c. To start all 3 applications, first\n/c is started than /b than /a.\n",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/strings.PathId"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "disk": {
+          "type": "number",
+          "default": 0,
+          "description": "How much disk space is needed for this application.\nThis number does not have to be an integer, but can be a fraction.\n",
+          "minimum": 0,
+          "format": "double"
+        },
+        "env": {
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.env.LegacyEnvVars"
+        },
+        "executor": {
+          "type": "string",
+          "default": "",
+          "description": "The executor to use to launch this application.\nDifferent executors are available.\nThe simplest one (and the one configured by default if none is given) is `//cmd`,\nwhich takes the cmd and executes that on the shell level.\n",
+          "pattern": "^(//cmd)|(/?[^/]+(/[^/]+)*)|$"
+        },
+        "fetch": {
+          "type": "array",
+          "description": "Provided URIs are passed to Mesos fetcher module and resolved in runtime.",
+          "items": {
+            "$ref": "#/definitions/app.artifact.Artifact"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "healthChecks": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/app.health.AppHealthCheck"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "instances": {
+          "type": "integer",
+          "default": 1,
+          "description": "The number of instances of this application to start.\nPlease note: this number can be changed any time as needed to\nscale the application.\n",
+          "minimum": 0,
+          "format": "int32"
+        },
+        "labels": {
+          "$ref": "#/definitions/app.label.KVLabels"
+        },
+        "maxLaunchDelaySeconds": {
+          "type": "integer",
+          "default": 3600,
+          "description": "Configures exponential backoff behavior when launching potentially sick\napps. This prevents sandboxes associated with consecutively failing tasks\nfrom filling up the hard disk on Mesos slaves.\nThe backoff period is multiplied by the factor for each consecutive\nfailure until it reaches maxLaunchDelaySeconds.\nThis applies also to tasks that are killed due to failing too many health checks.\n",
+          "minimum": 0,
+          "format": "int32"
+        },
+        "mem": {
+          "type": "number",
+          "default": 128,
+          "description": "The amount of memory in MB that is needed for the application per instance.\n",
+          "minimum": 0,
+          "format": "double"
+        },
+        "gpus": {
+          "type": "integer",
+          "default": 0,
+          "description": "The amount of GPU cores that is needed for the application per instance.\n",
+          "minimum": 0,
+          "format": "int32"
+        },
+        "ipAddress": {
+          "x-annotation-app.pragma.deprecated": "Use `networks` instead.",
+          "$ref": "#/definitions/app.network.IpAddress"
+        },
+        "networks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/app.network.Network"
+          }
+        },
+        "ports": {
+          "type": "array",
+          "description": "An array of required port resources on the agent host.\nThe number of items in the array determines how many dynamic ports are\nallocated for every task.\nFor every port that is zero, a globally unique (cluster-wide) port is\nassigned and provided as part of the app definition to be used in load\nbalancing definitions.\n",
+          "items": {
+            "$ref": "#/definitions/app.number.AnyPort"
+          },
+          "x-annotation-app.pragma.forceOptional": "",
+          "x-annotation-app.pragma.deprecated": "Use `portDefinitions` instead."
+        },
+        "portDefinitions": {
+          "type": "array",
+          "description": "An array of required port resources on the agent host.\nThe number of items in the array determines how many dynamic ports are\nallocated for every task. For every port definition with port number zero,\na globally unique (cluster-wide) service port is assigned and provided as\npart of the app definition to be used in load balancing definitions.\n",
+          "items": {
+            "$ref": "#/definitions/app.network.PortDefinition"
+          },
+          "x-annotation-app.pragma.forceOptional": ""
+        },
+        "readinessChecks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/app.readiness.ReadinessCheck"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "residency": {
+          "$ref": "#/definitions/app.AppResidency"
+        },
+        "requirePorts": {
+          "type": "boolean",
+          "default": false,
+          "description": "Applies only for host networking.\nNormally, the host ports of your tasks are automatically assigned.\nThis corresponds to the requirePorts value false which is the default.\nIf you need more control and want to specify your host ports in advance,\nyou can set requirePorts to true. This way the ports you have specified\nare used as host ports. That also means that Marathon can schedule the\nassociated tasks only on hosts that have the specified ports available.\n"
+        },
+        "secrets": {
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.secrets.Secrets"
+        },
+        "taskKillGracePeriodSeconds": {
+          "type": "integer",
+          "description": "Configures the number of seconds between escalating from SIGTERM to\nSIGKILL when signalling tasks to terminate.\nUsing this grace period, tasks should perform orderly shut down\nimmediately upon receiving SIGTERM.\n",
+          "minimum": 0,
+          "format": "int32"
+        },
+        "upgradeStrategy": {
+          "$ref": "#/definitions/app.UpgradeStrategy"
+        },
+        "uris": {
+          "type": "array",
+          "description": "URIs defined here are resolved, before the application gets started.\nIf the application has external dependencies, they should be defined here.\n",
+          "items": {
+            "$ref": "#/definitions/strings.Uri"
+          },
+          "x-annotation-app.pragma.forceOptional": "",
+          "x-annotation-app.pragma.deprecated": "Use `fetch` instead."
+        },
+        "user": {
+          "type": "string",
+          "description": "The user to use to run the tasks on the agent."
+        },
+        "version": {
+          "type": "string",
+          "description": "The version of this definition",
+          "format": "date-time"
+        },
+        "versionInfo": {
+          "$ref": "#/definitions/app.versionInfo.VersionInfo"
+        },
+        "killSelection": {
+          "default": "YOUNGEST_FIRST",
+          "$ref": "#/definitions/app.killSelection.KillSelection"
+        },
+        "unreachableStrategy": {
+          "$ref": "#/definitions/app.unreachableStrategy.UnreachableStrategy"
+        },
+        "tty": {
+          "description": "Describes the information about (pseudo) TTY that can be attached to the process of this container.\n",
+          "$ref": "#/definitions/app.containerCommons.TTY"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "x-annotation-app.pragma.generateUpdateType": ""
+    },
+    "app.appContainer.EngineType": {
+      "type": "string",
+      "description": "Container engine type. Supported engine types at the moment are DOCKER and MESOS.\n",
+      "enum": [
+        "MESOS",
+        "DOCKER"
+      ]
+    },
+    "app.appContainer.DockerCredentials": {
+      "type": "object",
+      "description": "Credential to authenticate with the docker registry",
+      "properties": {
+        "principal": {
+          "type": "string",
+          "description": "Principal to authenticate with the docker registry"
+        },
+        "secret": {
+          "type": "string",
+          "description": "Secret to authenticate with the docker registry"
+        }
+      },
+      "required": [
+        "principal"
+      ],
+      "x-annotation-app.pragma.deprecated": "Deprecated since v1.5"
+    },
+    "app.appContainer.DockerNetwork": {
+      "type": "string",
+      "description": "The networking mode, this container should operate in.\nOne of BRIDGE|HOST|NONE|USER\n",
+      "enum": [
+        "BRIDGE",
+        "HOST",
+        "NONE",
+        "USER"
+      ]
+    },
+    "app.appContainer.DockerParameter": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "key of this parameter",
+          "minLength": 1
+        },
+        "value": {
+          "type": "string",
+          "description": "value of this parameter"
+        }
+      },
+      "required": [
+        "key",
+        "value"
+      ]
+    },
+    "app.appContainer.ContainerPortMapping": {
+      "type": "object",
+      "properties": {
+        "containerPort": {
+          "default": 0,
+          "description": "Refers to the port the application listens to inside of the\ncontainer.\nIt is optional and defaults to 0.\nFor each containerPort with a value of 0 Marathon assigns the\ncontainerPort the same value as the assigned hostPort.\nThis is especially useful for apps that advertise the port they\nare listening on to the outside world for P2P communication.\nWithout containerPort: 0 they would erroneously advertise their\nprivate container port which is usually not the same as the\nexternally visible host port.\n",
+          "$ref": "#/definitions/app.number.AnyPort"
+        },
+        "hostPort": {
+          "description": "Retains the traditional meaning in Marathon, which is a random\nport from the range included in the Mesos resource offer.\nThe resulting host ports for each task are exposed via the task\ndetails in the REST API and the Marathon web UI.\nhostPort is optional.\nIn BRIDGE mode it defaults to 0 if left unspecified.\nIn USER mode an unspecified hostPort does not allocate a port\nfrom a Mesos offer.\n",
+          "$ref": "#/definitions/app.number.AnyPort"
+        },
+        "labels": {
+          "description": "This can be used to add metadata to be interpreted by external applications such as firewalls.",
+          "$ref": "#/definitions/app.label.KVLabels"
+        },
+        "name": {
+          "description": "Name of the service hosted on this port. If provided, it must be unique over all port mappings.",
+          "$ref": "#/definitions/strings.LegacyName"
+        },
+        "protocol": {
+          "default": "tcp",
+          "$ref": "#/definitions/strings.NetworkProtocol"
+        },
+        "servicePort": {
+          "default": 0,
+          "description": "Is a helper port intended for doing service discovery using a\nwell-known port per service.\nThe assigned servicePort value is not used/interpreted by\nMarathon itself but supposed to used by load balancer\ninfrastructure.\nSee Service Discovery Load Balancing doc page.\nThe servicePort parameter is optional and defaults to 0.\nLike hostPort, If the value is 0, a random port will be assigned.\nIf a servicePort value is assigned by Marathon then Marathon\nguarantees that its value is unique across the cluster.\nThe values for random service ports are in the range\n[local_port_min, local_port_max] where local_port_min and\nlocal_port_max are command line options with default values of\n10000 and 20000, respectively.\n",
+          "$ref": "#/definitions/app.number.AnyPort"
+        },
+        "networkNames": {
+          "type": "array",
+          "description": "List of the container networks associated with this mapping. If\nabsent, then this mapping is associated with all defined container\nnetworks (for this application). A single item list is mandatory when\n`hostPort` is specified and multiple container networks are defined.\n",
+          "items": {
+            "$ref": "#/definitions/strings.Name"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        }
+      },
+      "required": [
+        "containerPort"
+      ]
+    },
+    "app.appContainer.DockerContainer": {
+      "type": "object",
+      "properties": {
+        "credential": {
+          "description": "The credentials to fetch this container.\nPlease note: this property is supported only with the Mesos containerizer, not the docker containerizer.\n",
+          "x-annotation-app.pragma.deprecated": "Deprecated in favor of pullConfig",
+          "$ref": "#/definitions/app.appContainer.DockerCredentials"
+        },
+        "pullConfig": {
+          "description": "Docker's config.json given as a secret name into a secret store\nwhich corresponding value is a content of `~/.docker/config.json`.\nIt is supported only with Mesos containerizer.\n",
+          "$ref": "#/definitions/app.appContainer.docker.DockerPullConfig"
+        },
+        "forcePullImage": {
+          "type": "boolean",
+          "default": false,
+          "description": "The container will be pulled, regardless if it is already available on\nthe local system.\n"
+        },
+        "image": {
+          "type": "string",
+          "description": "The name of the docker image to use",
+          "minLength": 1
+        },
+        "network": {
+          "x-annotation-app.pragma.deprecated": "Deprecated in favor of App.networks",
+          "$ref": "#/definitions/app.appContainer.DockerNetwork"
+        },
+        "parameters": {
+          "type": "array",
+          "description": "Allowing arbitrary parameters to be passed to docker CLI.\nNote that anything passed to this field is not guaranteed to be\nsupported moving forward, as we might move away from the docker CLI.\n",
+          "items": {
+            "$ref": "#/definitions/app.appContainer.DockerParameter"
+          }
+        },
+        "portMappings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/app.appContainer.ContainerPortMapping"
+          },
+          "x-annotation-app.pragma.deprecated": "Deprecated in favor of Container.portMappings",
+          "x-annotation-app.pragma.forceOptional": ""
+        },
+        "privileged": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run this docker image in privileged mode\nPlease note: this property is supported only with the docker containerizer, not the Mesos containerizer.\n"
+        }
+      },
+      "required": [
+        "image"
+      ]
+    },
+    "app.appContainer.AppCContainer": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "The name of the AppC image to use",
+          "minLength": 1
+        },
+        "id": {
+          "type": "string",
+          "description": "An image ID is a string of the format 'hash-value', where 'hash' is\nthe hash algorithm used and 'value' is the hex-encoded digest.\nCurrently the only permitted hash algorithm is sha512.\n",
+          "minLength": 7
+        },
+        "labels": {
+          "description": "Optional labels. Suggested labels: 'version', 'os', 'arch'.\n",
+          "$ref": "#/definitions/app.label.KVLabels"
+        },
+        "forcePullImage": {
+          "type": "boolean",
+          "default": false,
+          "description": "The container will be pulled, regardless if it is already available\non the local system\n"
+        }
+      },
+      "required": [
+        "image"
+      ]
+    },
+    "app.appContainer.Container": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "default": "DOCKER",
+          "$ref": "#/definitions/app.appContainer.EngineType"
+        },
+        "docker": {
+          "$ref": "#/definitions/app.appContainer.DockerContainer"
+        },
+        "appc": {
+          "$ref": "#/definitions/app.appContainer.AppCContainer"
+        },
+        "volumes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/pod.volumes.AppVolume"
+          }
+        },
+        "portMappings": {
+          "type": "array",
+          "description": "Map container ports to host and service ports when using bridge- or container-mode networking.\nIf left unspecified, Marathon will provide a single, default port mapping.\nTo obtain a container with no port mappings, specify an empty array here.\n",
+          "items": {
+            "$ref": "#/definitions/app.appContainer.ContainerPortMapping"
+          },
+          "x-annotation-app.pragma.forceOptional": ""
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "app.artifact.Artifact": {
+      "type": "object",
+      "example": {
+        "uri": "http://download.me/file.tgz",
+        "extract": true,
+        "executable": true,
+        "cache": false
+      },
+      "properties": {
+        "uri": {
+          "$ref": "#/definitions/strings.Uri"
+        },
+        "extract": {
+          "type": "boolean",
+          "default": true
+        },
+        "executable": {
+          "type": "boolean",
+          "default": false
+        },
+        "cache": {
+          "type": "boolean",
+          "default": false
+        },
+        "destPath": {
+          "$ref": "#/definitions/strings.Path"
+        }
+      },
+      "required": [
+        "uri"
+      ]
+    },
+    "app.constraints.ConstraintOperator": {
+      "type": "string",
+      "enum": [
+        "UNIQUE",
+        "CLUSTER",
+        "GROUP_BY",
+        "LIKE",
+        "UNLIKE",
+        "MAX_PER"
+      ]
+    },
+    "app.constraints.Constraint": {
+      "type": "object",
+      "properties": {
+        "fieldName": {
+          "type": "string"
+        },
+        "operator": {
+          "$ref": "#/definitions/app.constraints.ConstraintOperator"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fieldName",
+        "operator"
+      ],
+      "example": {
+        "fieldName": "hostname",
+        "operator": "UNIQUE"
+      }
+    },
+    "app.constraints.AppConstraint": {
+      "type": "array",
+      "example": [
+        "hostname",
+        "UNIQUE"
+      ],
+      "description": "v2 App defined constraints as a 2 or 3 element array\nwith [fieldName, ConstraintOperator(,value?)].\n",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 2,
+      "maxItems": 3,
+      "x-annotation-app.pragma.omitEmpty": ""
+    },
+    "app.constraints.VolumeConstraint": {
+      "type": "array",
+      "description": "Constrain which volume to choose on the agent.\nCurrently, it is only possible to constrain the path of the disk resource by regular expression.\n",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 2,
+      "maxItems": 3,
+      "x-annotation-app.pragma.omitEmpty": ""
+    },
+    "app.containerCommons.TTY": {
+      "type": "object",
+      "description": "Describes the information about (pseudo) TTY that can be attached to a process running in a container.\n",
+      "properties": {
+        "rows": {
+          "type": "integer",
+          "default": 25,
+          "description": "The rows of the tty device.",
+          "minimum": 1,
+          "format": "int32"
+        },
+        "columns": {
+          "type": "integer",
+          "default": 80,
+          "description": "The columns of the tty device.",
+          "minimum": 1,
+          "format": "int32"
+        }
+      }
+    },
+    "app.appContainer.docker.DockerPullConfig": {
+      "type": "object",
+      "description": "Docker's config.json. It should be specifed only as a secret\nname into a secret store, and the corresponding value should be\na stringified valid JSON object which can be found in\n`~/.docker/config.json`.\n",
+      "properties": {
+        "secret": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "secret"
+      ]
+    },
+    "app.env.EnvVarValue": {
+      "type": "string"
+    },
+    "app.env.EnvVarSecret": {
+      "type": "object",
+      "description": "An environment variable set to a secret",
+      "properties": {
+        "secret": {
+          "type": "string",
+          "description": "The name of the secret to refer to. At runtime, the value of the\nsecret will be injected into the value of the variable.\n"
+        }
+      },
+      "required": [
+        "secret"
+      ]
+    },
+    "app.env.EnvVarValueOrSecret": {
+      "type": "object"
+    },
+    "app.env.EnvVars": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/app.env.EnvVarValueOrSecret"
+      }
+    },
+    "app.env.LegacyEnvVars": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/app.env.EnvVarValueOrSecret"
+      }
+    },
+    "error.ErrorDetail": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "error.Error": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/error.ErrorDetail"
+          }
+        }
+      },
+      "required": [
+        "message"
+      ]
+    },
+    "group.Group": {
+      "type": "object",
+      "description": "Group is used to create or update applications and groups. Pods are not mutable\nthrough this interface, but are included for completeness.\n",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/strings.PathId"
+        },
+        "apps": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/app.App"
+          }
+        },
+        "pods": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/pod.Pod"
+          }
+        },
+        "groups": {
+          "type": "array",
+          "description": "Groups can build a tree.\nEach group can contain sub-groups.\nThe sub-groups are defined here.\n",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/group.Group"
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "description": "A list of services that this group depends on.\nAn order is derived from the dependencies for performing start/stop and\nupgrade of the application. For example, an application /a relies on the\nservices /b which itself relies on /c. To start all 3 applications,\nfirst /c is started than /b than /a.\n",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/strings.PathId"
+          }
+        },
+        "version": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "group.GroupInfo": {
+      "type": "object",
+      "description": "GroupInfo is a status report of a tree (or subtree) of the root-group hierarchy\nwithin Marathon. It is never used to update groups, it is only for reporting.\nTODO App should be AppInfo here, once we have a RAML type for that.\n",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/strings.PathId"
+        },
+        "apps": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/app.App"
+          }
+        },
+        "pods": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/podStatus.PodStatus"
+          }
+        },
+        "groups": {
+          "type": "array",
+          "description": "Groups can build a tree.\nEach group can contain sub-groups.\nThe sub-groups are defined here.\n",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/group.GroupInfo"
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "description": "A list of services that this group depends on.\nAn order is derived from the dependencies for performing start/stop and\nupgrade of the application. For example, an application /a relies on the\nservices /b which itself relies on /c. To start all 3 applications,\nfirst /c is started than /b than /a.\n",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/strings.PathId"
+          }
+        },
+        "version": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "group.GroupUpdate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/strings.PathId"
+        },
+        "apps": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/app.App"
+          }
+        },
+        "groups": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/group.GroupUpdate"
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/strings.PathId"
+          }
+        },
+        "scaleBy": {
+          "type": "number",
+          "minimum": 0,
+          "format": "double"
+        },
+        "version": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "x-annotation-app.pragma.asUpdateType": ""
+    },
+    "app.health.HttpHealthCheck": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "description": "The endpoint name to use.\nIn \"host\" mode health checks use the hostPort. In other modes use the containerPort.\n",
+          "$ref": "#/definitions/strings.Name"
+        },
+        "path": {
+          "$ref": "#/definitions/strings.Path"
+        },
+        "scheme": {
+          "default": "HTTP",
+          "$ref": "#/definitions/strings.HttpScheme"
+        }
+      },
+      "required": [
+        "endpoint"
+      ]
+    },
+    "app.health.TcpHealthCheck": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "description": "The endpoint name to use.\nIn \"host\" mode health checks use the hostPort. In other modes use the containerPort.\n",
+          "$ref": "#/definitions/strings.Name"
+        }
+      },
+      "required": [
+        "endpoint"
+      ]
+    },
+    "app.health.CommandHealthCheck": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "$ref": "#/definitions/app.health.command.MesosCommand"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    },
+    "app.health.HealthCheck": {
+      "properties": {
+        "http": {
+          "$ref": "#/definitions/app.health.HttpHealthCheck"
+        },
+        "tcp": {
+          "$ref": "#/definitions/app.health.TcpHealthCheck"
+        },
+        "exec": {
+          "description": "Command that executes some health check process.\nUse with pods requires Mesos v1.2 or higher.\n",
+          "$ref": "#/definitions/app.health.CommandHealthCheck"
+        },
+        "gracePeriodSeconds": {
+          "type": "integer",
+          "default": 300,
+          "description": "Health check failures are ignored within this number of seconds of\nthe task being started or until the task becomes healthy for the\nfirst time.\n",
+          "minimum": 0,
+          "format": "int32"
+        },
+        "intervalSeconds": {
+          "type": "integer",
+          "default": 60,
+          "description": "Interval between the health checks",
+          "minimum": 0,
+          "format": "int32"
+        },
+        "maxConsecutiveFailures": {
+          "type": "integer",
+          "default": 3,
+          "description": "Number of consecutive failures until the task will be killed",
+          "minimum": 0,
+          "format": "int32"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 20,
+          "description": "Amount of time to wait for the health check to complete.",
+          "minimum": 0,
+          "format": "int32"
+        },
+        "delaySeconds": {
+          "type": "integer",
+          "default": 15,
+          "description": "Amount of time to wait until starting the health checks.",
+          "minimum": 0,
+          "format": "int32"
+        }
+      },
+      "type": "object"
+    },
+    "app.health.AppHealthCheckProtocol": {
+      "type": "string",
+      "description": "Protocol of the requests to be performed.\n",
+      "enum": [
+        "HTTP",
+        "HTTPS",
+        "TCP",
+        "COMMAND",
+        "MESOS_TCP",
+        "MESOS_HTTP",
+        "MESOS_HTTPS"
+      ]
+    },
+    "app.health.CommandCheck": {
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Command line executed by the default shell.\nThis process has to return with a zero exit code to indicate the process is healthy.\nReturn codes other than null signal, the task is unhealthy.\n"
+        }
+      },
+      "type": "object",
+      "required": [
+        "value"
+      ]
+    },
+    "app.health.AppHealthCheck": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "$ref": "#/definitions/app.health.CommandCheck"
+        },
+        "gracePeriodSeconds": {
+          "type": "integer",
+          "default": 300,
+          "description": "Health check failures are ignored within this number of seconds of\nthe task being started or until the task becomes healthy for the\nfirst time.\n",
+          "minimum": 0,
+          "format": "int32"
+        },
+        "ignoreHttp1xx": {
+          "type": "boolean",
+          "description": "Ignore HTTP 1xx responses"
+        },
+        "intervalSeconds": {
+          "type": "integer",
+          "default": 60,
+          "description": "Number of seconds to wait between health checks",
+          "minimum": 0,
+          "format": "int32"
+        },
+        "maxConsecutiveFailures": {
+          "type": "integer",
+          "default": 3,
+          "description": "Number of consecutive health check failures after which the\nunhealthy task should be killed.\n",
+          "minimum": 0,
+          "format": "int32"
+        },
+        "path": {
+          "type": "string",
+          "example": "/path/to/health",
+          "description": "Path to endpoint exposed by the task that will provide health status.\nNote: only used if protocol == HTTP[S].\"\n"
+        },
+        "port": {
+          "description": "The specific port to connect to.\nIn case of dynamic ports, see portIndex.\n",
+          "$ref": "#/definitions/app.number.AnyPort"
+        },
+        "portIndex": {
+          "description": "Index in this app's ports array to be used for health requests.\nAn index is used so the app can use random ports,\nlike [0, 0, 0] for example, and tasks could be started with\nport environment variables like $PORT1.\n",
+          "$ref": "#/definitions/app.number.AnyPort"
+        },
+        "protocol": {
+          "default": "HTTP",
+          "$ref": "#/definitions/app.health.AppHealthCheckProtocol"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 20,
+          "description": "Number of seconds after which a health check is considered a failure\nregardless of the response.\n",
+          "format": "int32"
+        },
+        "delaySeconds": {
+          "type": "integer",
+          "default": 15,
+          "description": "Amount of time to wait until starting the health checks.",
+          "minimum": 0,
+          "format": "int32"
+        }
+      }
+    },
+    "app.killSelection.KillSelection": {
+      "type": "string",
+      "default": "YOUNGEST_FIRST",
+      "description": "Defines which instance is killed first.",
+      "enum": [
+        "YOUNGEST_FIRST",
+        "OLDEST_FIRST"
+      ]
+    },
+    "app.label.KVLabels": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "logging.LoggerLevel": {
+      "type": "string",
+      "description": "Enumeration type for all available log level.\n",
+      "enum": [
+        "trace",
+        "debug",
+        "info",
+        "warn",
+        "error"
+      ]
+    },
+    "logging.Loggers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "logging.LoggerChange": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "description": "The log level to set.",
+          "$ref": "#/definitions/logging.LoggerLevel"
+        },
+        "logger": {
+          "type": "string",
+          "description": "The full qualified name of the logger."
+        },
+        "durationSeconds": {
+          "type": "integer",
+          "description": "The number of seconds to set this logging level.\nThe current logging level is reset after the duration.\nIf this parameter is not defined, the change to the logging level is permanent\n",
+          "format": "int32"
+        }
+      },
+      "required": [
+        "level",
+        "logger"
+      ]
+    },
+    "app.health.command.ShellCommand": {
+      "type": "object",
+      "properties": {
+        "shell": {
+          "type": "string",
+          "description": "command line executed by the default shell, not parsed by marathon\n",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "shell"
+      ],
+      "additionalProperties": {
+        "type": "nil"
+      }
+    },
+    "app.health.command.ArgvCommand": {
+      "type": "object",
+      "properties": {
+        "argv": {
+          "type": "array",
+          "description": "named executable first, followed by one or more parameters",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "argv"
+      ],
+      "additionalProperties": {
+        "type": "nil"
+      }
+    },
+    "app.health.command.MesosCommand": {
+      "type": "object"
+    },
+    "metrics.TimeMeasurement": {
+      "type": "string",
+      "description": "The unit of time"
+    },
+    "metrics.GeneralMeasurement": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "label"
+      ]
+    },
+    "metrics.UnitOfMeasurement": {
+      "type": "object"
+    },
+    "metrics.Histogram": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "description": "The number of samples",
+          "format": "int64"
+        },
+        "min": {
+          "type": "number",
+          "description": "The minimum value",
+          "format": "int64"
+        },
+        "max": {
+          "type": "number",
+          "description": "The maximum value",
+          "format": "int64"
+        },
+        "p50": {
+          "type": "number",
+          "description": "The 50th percentile median value",
+          "format": "int64"
+        },
+        "p75": {
+          "type": "number",
+          "description": "The 75th percentile median value",
+          "format": "int64"
+        },
+        "p98": {
+          "type": "number",
+          "description": "The 98th percentile median value",
+          "format": "int64"
+        },
+        "p99": {
+          "type": "number",
+          "description": "The 99th percentile median value",
+          "format": "int64"
+        },
+        "p999": {
+          "type": "number",
+          "description": "The 999th percentile median value",
+          "format": "int64"
+        },
+        "mean": {
+          "type": "number",
+          "description": "The average of all samples",
+          "format": "float"
+        },
+        "tags": {
+          "type": "object",
+          "description": "metadata about the metric",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "unit": {
+          "description": "The unit of measurement",
+          "$ref": "#/definitions/metrics.UnitOfMeasurement"
+        }
+      },
+      "required": [
+        "count",
+        "min",
+        "max",
+        "p50",
+        "p75",
+        "p98",
+        "p99",
+        "p999",
+        "mean",
+        "tags",
+        "unit"
+      ]
+    },
+    "metrics.Counter": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "description": "The current value",
+          "format": "int64"
+        },
+        "tags": {
+          "type": "object",
+          "description": "metadata about the metric",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "unit": {
+          "description": "The unit of measurement",
+          "$ref": "#/definitions/metrics.UnitOfMeasurement"
+        }
+      },
+      "required": [
+        "count",
+        "tags",
+        "unit"
+      ]
+    },
+    "metrics.Metrics": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "end": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "histograms": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/metrics.Histogram"
+          }
+        },
+        "counters": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/metrics.Counter"
+          }
+        },
+        "gauges": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/metrics.Histogram"
+          }
+        },
+        "min-max-counter": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/metrics.Histogram"
+          }
+        }
+      },
+      "required": [
+        "start",
+        "end",
+        "histograms",
+        "counters",
+        "gauges",
+        "min-max-counter"
+      ],
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "app.network.Endpoint": {
+      "type": "object",
+      "description": "Endpoints accept connections from outside of a pod.\nEndpoints may also be advertised outside of a cluster.\n",
+      "properties": {
+        "name": {
+          "description": "Name of this port. Should be unique in the context of the pod.\n",
+          "$ref": "#/definitions/strings.Name"
+        },
+        "containerPort": {
+          "description": "The container port that a task's process is actually listening on.\nRequired if the network mode is container\n",
+          "$ref": "#/definitions/app.number.Port"
+        },
+        "hostPort": {
+          "description": "Mapped port on the host.\nAll host ports are allocated from resource offers.\n",
+          "$ref": "#/definitions/app.number.AnyPort"
+        },
+        "protocol": {
+          "type": "array",
+          "description": "The protocol of this port, advertised in Mesos DiscoveryInfo (DI).\nSpecifying more than one protocol here will result in the generation\nof multiple Port DI entries.\n",
+          "items": {
+            "$ref": "#/definitions/strings.Name"
+          },
+          "minItems": 1,
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "labels": {
+          "description": "Metadata as key/value pair. Possible uses include VIPs,\nper-network-interface binding\n",
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.label.KVLabels"
+        },
+        "networkNames": {
+          "type": "array",
+          "description": "List of the container networks associated with this endpoint. If\nabsent, then this endpoint is associated with all defined container\nnetworks (for this application). A single item list is mandatory when\n`hostPort` is specified and multiple container networks are defined.\n",
+          "items": {
+            "$ref": "#/definitions/strings.Name"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "app.network.NetworkMode": {
+      "type": "string",
+      "description": "`container` networks are named networks and are assigned an IP address by Mesos.\nThe `container/bridge` network is a special container network that operates in a\nmanner similar to Docker's \"default bridge\" mode, and depends on specific Mesos\nCNI support. The `host` network results in containers sharing the network namespace\nof the Mesos agent, and no IP address is allocated.\n",
+      "enum": [
+        "container",
+        "container/bridge",
+        "host"
+      ]
+    },
+    "app.network.Network": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Defines the name of the container network to join.\nNot for use with `host` mode networking.\n",
+          "$ref": "#/definitions/strings.Name"
+        },
+        "mode": {
+          "default": "container",
+          "$ref": "#/definitions/app.network.NetworkMode"
+        },
+        "labels": {
+          "description": "Labels applied to the pod's NetworkInfo.\nIgnored when using `host` node networking.\n",
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.label.KVLabels"
+        }
+      }
+    },
+    "app.network.IpDiscoveryPort": {
+      "type": "object",
+      "description": "Port",
+      "properties": {
+        "number": {
+          "default": 0,
+          "description": "The port number",
+          "$ref": "#/definitions/app.number.AnyPort"
+        },
+        "name": {
+          "description": "Name of the port",
+          "$ref": "#/definitions/strings.LegacyName"
+        },
+        "protocol": {
+          "default": "tcp",
+          "$ref": "#/definitions/strings.NetworkProtocol"
+        },
+        "labels": {
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.label.KVLabels"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "app.network.IpDiscovery": {
+      "type": "object",
+      "description": "Information useful for service discovery",
+      "properties": {
+        "ports": {
+          "type": "array",
+          "description": "Array of objects describing the ports exposed by each task\n",
+          "items": {
+            "$ref": "#/definitions/app.network.IpDiscoveryPort"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        }
+      }
+    },
+    "app.network.IpAddress": {
+      "type": "object",
+      "description": "If an application definition includes the 'ipAddress' field, then Marathon\nwill request a per-task IP from Mesos.\nA separate ports/portMappings configuration is then disallowed.\n",
+      "properties": {
+        "discovery": {
+          "description": "DEPRECATED. Please try to use portMappings instead.\n",
+          "$ref": "#/definitions/app.network.IpDiscovery"
+        },
+        "groups": {
+          "type": "array",
+          "description": "Ignored by Marathon, only exists here to preserve API compat (for now).",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "labels": {
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.label.KVLabels"
+        },
+        "networkName": {
+          "type": "string",
+          "description": "If present, declares the name of the network that the container should\njoin.\nIn practice it is up to the IPAM to decide how to interpret this field\n",
+          "minLength": 1
+        }
+      },
+      "x-annotation-app.pragma.deprecated": "Experimental API that is now deprecated. Prefer portMappings"
+    },
+    "app.network.PortDefinition": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "default": 0,
+          "description": "If requirePorts is set to true, then this port number will be used\non the agent host. Otherwise if the requirePorts is set to false and\nthis port number is not zero, then it will be used as a service port\nand a dynamic port will be used on the agent host.\nIf it is set to zero, a dynamic port will be used on the host and a\nunique service port will be assigned by Marathon.\n",
+          "$ref": "#/definitions/app.number.AnyPort"
+        },
+        "labels": {
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.label.KVLabels"
+        },
+        "name": {
+          "description": "Name of the service hosted on this port.\nIf provided, it must be unique over all port definitions.\n",
+          "$ref": "#/definitions/strings.LegacyName"
+        },
+        "protocol": {
+          "default": "tcp",
+          "description": "If this port is used for tcp or udp or both.",
+          "$ref": "#/definitions/strings.NetworkProtocol"
+        }
+      }
+    },
+    "app.number.Port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "format": "int32"
+    },
+    "app.number.AnyPort": {
+      "type": "integer",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 65535,
+      "format": "int32"
+    },
+    "queue.offer.NumberRange": {
+      "properties": {
+        "begin": {
+          "type": "number",
+          "format": "int64"
+        },
+        "end": {
+          "type": "number",
+          "format": "int64"
+        }
+      },
+      "type": "object",
+      "required": [
+        "begin",
+        "end"
+      ]
+    },
+    "queue.offer.OfferResource": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the resource."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role this resource is assigned to."
+        },
+        "scalar": {
+          "type": "number",
+          "description": "The scalar value of the resource.",
+          "format": "double"
+        },
+        "ranges": {
+          "type": "array",
+          "description": "The range value of the resource.",
+          "items": {
+            "$ref": "#/definitions/queue.offer.NumberRange"
+          },
+          "x-annotation-app.pragma.forceOptional": ""
+        },
+        "set": {
+          "type": "array",
+          "description": "all values of this resource.",
+          "items": {
+            "type": "string"
+          },
+          "x-annotation-app.pragma.forceOptional": ""
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "role"
+      ]
+    },
+    "queue.offer.AgentAttribute": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the attribute."
+        },
+        "text": {
+          "type": "string",
+          "description": "The text value of this attribute"
+        },
+        "scalar": {
+          "type": "number",
+          "description": "The scalar value of the attribute."
+        },
+        "ranges": {
+          "type": "array",
+          "description": "The range value of the attribute.",
+          "items": {
+            "$ref": "#/definitions/queue.offer.NumberRange"
+          },
+          "x-annotation-app.pragma.forceOptional": ""
+        },
+        "set": {
+          "type": "array",
+          "description": "all values of this attribute.",
+          "items": {
+            "type": "string"
+          },
+          "x-annotation-app.pragma.forceOptional": ""
+        }
+      },
+      "type": "object",
+      "required": [
+        "name"
+      ]
+    },
+    "queue.offer.Offer": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The id of this offer"
+        },
+        "hostname": {
+          "type": "string",
+          "description": "the hostname of the slave"
+        },
+        "agentId": {
+          "type": "string",
+          "description": "the id of the slave"
+        },
+        "resources": {
+          "type": "array",
+          "description": "all offered ressources",
+          "items": {
+            "$ref": "#/definitions/queue.offer.OfferResource"
+          }
+        },
+        "attributes": {
+          "type": "array",
+          "description": "all attributes of the agent",
+          "items": {
+            "$ref": "#/definitions/queue.offer.AgentAttribute"
+          }
+        }
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "hostname",
+        "agentId",
+        "resources",
+        "attributes"
+      ]
+    },
+    "pod.PodScalingPolicyType": {
+      "type": "string",
+      "enum": [
+        "fixed"
+      ]
+    },
+    "pod.PodScalingPolicy": {
+      "description": "Add new possible super-types as different scaling policies are supported.\n",
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/pod.PodScalingPolicyType"
+        }
+      },
+      "discriminator": "kind",
+      "type": "object",
+      "required": [
+        "kind"
+      ]
+    },
+    "pod.PodSchedulingBackoffStrategy": {
+      "type": "object",
+      "description": "Configures exponential backoff behavior when launching potentially sick apps.\nThis prevents sandboxes associated with consecutively failing tasks from filling up the hard disk on Mesos slaves.\nThe backoff period is multiplied by the factor for each consecutive failure until it reaches maxLaunchDelaySeconds.\nThis applies also to tasks that are killed due to failing too many health checks.\n",
+      "properties": {
+        "backoff": {
+          "type": "number",
+          "default": 1,
+          "description": "The initial backoff (seconds) applied when a launched instance fails.",
+          "minimum": 0
+        },
+        "backoffFactor": {
+          "type": "number",
+          "default": 1.15,
+          "description": "The factor applied to the current backoff to determine the new backoff.",
+          "minimum": 0
+        },
+        "maxLaunchDelay": {
+          "type": "number",
+          "default": 3600,
+          "description": "The maximum backoff (seconds) applied when subsequent failures are detected.",
+          "minimum": 0
+        }
+      }
+    },
+    "pod.PodUpgradeStrategy": {
+      "type": "object",
+      "description": "During an upgrade all instances of an application get replaced by a new version.\nThe upgradeStrategy controls how Marathon stops old versions and launches new versions.\n",
+      "properties": {
+        "minimumHealthCapacity": {
+          "type": "number",
+          "default": 1,
+          "description": "A number between 0and 1 that is multiplied with the instance count.\nThis is the minimum number of healthy nodes that do not sacrifice overall application purpose.\nMarathon will make sure, during the upgrade process, that at any point of time this number of healthy instances are up.\n",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "maximumOverCapacity": {
+          "type": "number",
+          "default": 1,
+          "description": "A number between 0 and 1 which is multiplied with the instance count.\nThis is the maximum number of additional instances launched at any point of time during the upgrade process.\n",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "pod.PodPlacementPolicy": {
+      "type": "object",
+      "properties": {
+        "constraints": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/app.constraints.Constraint"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "acceptedResourceRoles": {
+          "type": "array",
+          "example": [
+            "public-facing"
+          ],
+          "description": "A list of resource roles.\nMarathon considers only resource offers with roles in this list for\nlaunching tasks of this app. If you do not specify this,\nMarathon considers all resource offers with roles that have been\nconfigured by the `--default_accepted_resource_roles` command line flag.\nIf no `--default_accepted_resource_roles` was given on startup,\nMarathon considers all resource offers. To register Marathon for a role,\nyou need to specify the `--mesos_role` command line flag on startup.\nIf you want to assign all resources of a slave to a role,\nyou can use the `--default_role` argument when starting up the slave.\nIf you need a more fine-grained configuration, you can use the\n`--resources` argument to specify resource shares per role.\nSee [the Mesos attribute and resources documentation](http://mesos.apache.org/documentation/latest/attributes-resources/) for details\n",
+          "items": {
+            "type": "string"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        }
+      }
+    },
+    "pod.PodSchedulingPolicy": {
+      "type": "object",
+      "properties": {
+        "backoff": {
+          "$ref": "#/definitions/pod.PodSchedulingBackoffStrategy"
+        },
+        "upgrade": {
+          "$ref": "#/definitions/pod.PodUpgradeStrategy"
+        },
+        "placement": {
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/pod.PodPlacementPolicy"
+        },
+        "killSelection": {
+          "$ref": "#/definitions/app.killSelection.KillSelection"
+        },
+        "unreachableStrategy": {
+          "$ref": "#/definitions/app.unreachableStrategy.UnreachableStrategy"
+        }
+      }
+    },
+    "pod.Pod": {
+      "description": "A pod allows one to launch a collection co-located (on the same agent) containers\nthat share the same network namespace and that may share the same volumes.\nResources are specified on a per-container basis.\n",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/strings.PathId"
+        },
+        "labels": {
+          "description": "Metadata as key/value pair.\nUseful when passing directives to be interpreted by Mesos modules.\n",
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.label.KVLabels"
+        },
+        "version": {
+          "type": "string",
+          "description": "The version of the definition, immutable",
+          "format": "date-time"
+        },
+        "user": {
+          "type": "string",
+          "description": "The OS user to use to run the tasks on the agent.\nMay be overridden by a container.\n"
+        },
+        "environment": {
+          "description": "Environment Variables to set at the pod level.\nIndividual containers may override them\n",
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.env.EnvVars"
+        },
+        "containers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/pod.container.PodContainer"
+          },
+          "minItems": 1
+        },
+        "secrets": {
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.secrets.Secrets"
+        },
+        "volumes": {
+          "type": "array",
+          "description": "Volumes defined on a pod level that are mounted into containers",
+          "items": {
+            "$ref": "#/definitions/pod.volumes.PodVolume"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "networks": {
+          "type": "array",
+          "description": "Network settings are defined on a pod level. All containers share the same network stack.\nAt this time, only one stack is supported.\n",
+          "items": {
+            "$ref": "#/definitions/app.network.Network"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "scaling": {
+          "$ref": "#/definitions/pod.PodScalingPolicy"
+        },
+        "scheduling": {
+          "$ref": "#/definitions/pod.PodSchedulingPolicy"
+        },
+        "executorResources": {
+          "description": "The resources to allocate to the executor.",
+          "$ref": "#/definitions/pod.resources.ExecutorResources"
+        }
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "containers"
+      ]
+    },
+    "pod.container.ImageType": {
+      "type": "string",
+      "enum": [
+        "DOCKER",
+        "APPC"
+      ]
+    },
+    "pod.container.Image": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/pod.container.ImageType"
+        },
+        "id": {
+          "example": "mesosphere/marathon:1.3.0",
+          "description": "address/identifier of the file system image",
+          "$ref": "#/definitions/strings.Path"
+        },
+        "pullConfig": {
+          "description": "Name of a secret whose value contains a stringified\nDocker config.json\n",
+          "$ref": "#/definitions/app.appContainer.docker.DockerPullConfig"
+        },
+        "forcePull": {
+          "type": "boolean",
+          "description": "true if the image should always be pulled"
+        },
+        "labels": {
+          "description": "Used during image discovery and dependency resolution.\nSeveral well-known labels are defined:\nversion: the version of this image\nos: (default: linux) operating system\narch: (default: amd64) architecture\n",
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.label.KVLabels"
+        }
+      },
+      "required": [
+        "kind",
+        "id"
+      ]
+    },
+    "pod.container.MesosExec": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "description": "Command specification executed by Mesos, not parsed by Marathon.\nThe presence of `command.shell` implies `overrideEntrypoint=true`.\n",
+          "$ref": "#/definitions/app.health.command.MesosCommand"
+        },
+        "overrideEntrypoint": {
+          "type": "boolean",
+          "description": "When true argv[0] will be used as the entrypoint/exec of the container.\nOtherwise the contents of argv[] are appended as arguments.\n"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    },
+    "pod.container.Lifecycle": {
+      "type": "object",
+      "properties": {
+        "killGracePeriodSeconds": {
+          "type": "number",
+          "description": "After a SIGTERM is sent to a container instance, Mesos will wait this number of seconds\nbefore issuing a SIGKILL.\n",
+          "minimum": 0,
+          "format": "double"
+        }
+      }
+    },
+    "pod.container.PodContainer": {
+      "type": "object",
+      "description": "Mesos Container",
+      "properties": {
+        "name": {
+          "description": "The name of this container",
+          "$ref": "#/definitions/strings.Name"
+        },
+        "exec": {
+          "$ref": "#/definitions/pod.container.MesosExec"
+        },
+        "resources": {
+          "description": "The resources to allocate to the container.",
+          "$ref": "#/definitions/pod.resources.Resources"
+        },
+        "endpoints": {
+          "type": "array",
+          "description": "The ports needed to run this container",
+          "items": {
+            "$ref": "#/definitions/app.network.Endpoint"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "image": {
+          "description": "The filesystem image to populate the container with",
+          "$ref": "#/definitions/pod.container.Image"
+        },
+        "environment": {
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.env.EnvVars"
+        },
+        "user": {
+          "type": "string",
+          "description": "The OS user to use to run the tasks on the agent.\nValues here override a \"user\" value specified in the pod definition.\n"
+        },
+        "healthCheck": {
+          "description": "All healthchecks to perform on the container",
+          "$ref": "#/definitions/app.health.HealthCheck"
+        },
+        "volumeMounts": {
+          "type": "array",
+          "description": "All volume mounts",
+          "items": {
+            "$ref": "#/definitions/pod.volumes.VolumeMount"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "artifacts": {
+          "type": "array",
+          "description": "All artifacts to download before the task runs",
+          "items": {
+            "$ref": "#/definitions/app.artifact.Artifact"
+          },
+          "x-annotation-app.pragma.omitEmpty": ""
+        },
+        "labels": {
+          "description": "Metadata as key/value pair.\nUseful when passing directives to be interpreted by Mesos modules.\n",
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.label.KVLabels"
+        },
+        "lifecycle": {
+          "$ref": "#/definitions/pod.container.Lifecycle"
+        },
+        "tty": {
+          "description": "Describes the information about (pseudo) TTY that can be attached to the process of this container.\n",
+          "$ref": "#/definitions/app.containerCommons.TTY"
+        }
+      },
+      "required": [
+        "name",
+        "resources"
+      ]
+    },
+    "podStatus.StatusCondition": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Human and machine-readable name of this condition.\nFor example \"healthy\", \"disk-full\".\n",
+          "$ref": "#/definitions/strings.Name"
+        },
+        "lastChanged": {
+          "type": "string",
+          "description": "last time the value field was changed for this condition",
+          "format": "date-time"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "last time this condition was updated (value may not have changed)",
+          "format": "date-time"
+        },
+        "value": {
+          "type": "string",
+          "description": "the state of the condition. may be boolean or some enumeration-derived value",
+          "maxLength": 64
+        },
+        "reason": {
+          "type": "string",
+          "description": "a machine-readable value that systems use to reason about the state of the condition\n"
+        }
+      },
+      "required": [
+        "name",
+        "lastChanged",
+        "lastUpdated",
+        "value"
+      ]
+    },
+    "podStatus.ContainerState": {
+      "type": "string",
+      "description": "Reflects the status of the associated Mesos task.\n"
+    },
+    "podStatus.ContainerEndpointStatus": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "name of the endpoint",
+          "$ref": "#/definitions/strings.Name"
+        },
+        "allocatedHostPort": {
+          "$ref": "#/definitions/app.number.Port"
+        },
+        "healthy": {
+          "type": "boolean",
+          "description": "true if a health check is defined for this endpoint and is passing"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "podStatus.ContainerTerminationState": {
+      "type": "object",
+      "properties": {
+        "exitCode": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-explanation for container termination."
+        }
+      }
+    },
+    "podStatus.ContainerStatus": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "name of the container specification (within the pod)",
+          "$ref": "#/definitions/strings.Name"
+        },
+        "status": {
+          "$ref": "#/definitions/podStatus.ContainerState"
+        },
+        "statusSince": {
+          "type": "string",
+          "description": "Time at which the status code was last modified.\n",
+          "format": "date-time"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-friendly explanation for the container's current status.\n"
+        },
+        "conditions": {
+          "type": "array",
+          "description": "Set of status conditions that apply to this container.\n",
+          "items": {
+            "$ref": "#/definitions/podStatus.StatusCondition"
+          }
+        },
+        "containerId": {
+          "type": "string",
+          "description": "Unique ID of this container in the cluster.\nTODO(jdef) Probably represents the Mesos task ID.\n"
+        },
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/podStatus.ContainerEndpointStatus"
+          }
+        },
+        "resources": {
+          "description": "Resources in use by this container.\n",
+          "$ref": "#/definitions/pod.resources.Resources"
+        },
+        "termination": {
+          "$ref": "#/definitions/podStatus.ContainerTerminationState"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "Time that this status was last checked and updated (even if nothing changed)\n",
+          "format": "date-time"
+        },
+        "lastChanged": {
+          "type": "string",
+          "description": "Time that this status was last modified (some aspect of status did change)\n",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "name",
+        "status",
+        "statusSince",
+        "lastUpdated",
+        "lastChanged"
+      ]
+    },
+    "podStatus.PodState": {
+      "type": "string",
+      "description": "DEGRADED - The number of STABLE pod instances is less than the number of desired instances.\nSTABLE   - All launched pod instances have started and, if health checks were specified, are all healthy.\nTERMINAL - Marathon is tearing down all of the instances for this pod.\n",
+      "enum": [
+        "DEGRADED",
+        "STABLE",
+        "TERMINAL"
+      ]
+    },
+    "podStatus.NetworkStatus": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "name of the network",
+          "$ref": "#/definitions/strings.Name"
+        },
+        "addresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "podStatus.PodInstanceState": {
+      "type": "string",
+      "description": "PENDING  - Instance is queued for launch.\nSTAGING  - Instance has been launched but is not yet running.\nSTABLE   - Any terminated containers have completed successfully and any running containers\n           are healthy (TBD by health checks, if enabled).\nDEGRADED - One or more containers are running but the instance is not considered STABLE.\nTERMINAL - Instance is in the process of shutting down.\n",
+      "enum": [
+        "PENDING",
+        "STAGING",
+        "STABLE",
+        "DEGRADED",
+        "TERMINAL"
+      ]
+    },
+    "podStatus.PodInstanceStatus": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique ID of this pod instance in the cluster.\nTODO(jdef) Probably represents the Mesos executor ID.\n"
+        },
+        "status": {
+          "$ref": "#/definitions/podStatus.PodInstanceState"
+        },
+        "statusSince": {
+          "type": "string",
+          "description": "Time at which the status code was last modified.\n",
+          "format": "date-time"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-friendly explanation for reason of the current status.\n"
+        },
+        "conditions": {
+          "type": "array",
+          "description": "Set of status conditions that apply to this pod instance.\n",
+          "items": {
+            "$ref": "#/definitions/podStatus.StatusCondition"
+          }
+        },
+        "agentHostname": {
+          "type": "string",
+          "description": "Hostname that this instance was launched on.\nMay be an IP address if the agent was configured to advertise its hostname that way.\n"
+        },
+        "resources": {
+          "description": "Sum of all resources allocated for this pod instance.\nMay include additional, system-allocated resources for the default executor.\n",
+          "$ref": "#/definitions/pod.resources.Resources"
+        },
+        "networks": {
+          "type": "array",
+          "description": "Status of the networks to which this instance is attached.\n",
+          "items": {
+            "$ref": "#/definitions/podStatus.NetworkStatus"
+          }
+        },
+        "containers": {
+          "type": "array",
+          "description": "status for each running container of this instance.",
+          "items": {
+            "$ref": "#/definitions/podStatus.ContainerStatus"
+          }
+        },
+        "specReference": {
+          "description": "Location of the version of the pod specification this instance was created from.\n",
+          "$ref": "#/definitions/strings.Uri"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "Time that this status was last checked and updated (even if nothing changed)\n",
+          "format": "date-time"
+        },
+        "lastChanged": {
+          "type": "string",
+          "description": "Time that this status was last modified (some aspect of status did change)\n",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "statusSince",
+        "lastUpdated",
+        "lastChanged"
+      ]
+    },
+    "podStatus.ContainerTerminationHistory": {
+      "type": "object",
+      "properties": {
+        "containerId": {
+          "type": "string"
+        },
+        "lastKnownState": {
+          "$ref": "#/definitions/podStatus.ContainerState"
+        },
+        "termination": {
+          "$ref": "#/definitions/podStatus.ContainerTerminationState"
+        }
+      },
+      "required": [
+        "containerId"
+      ]
+    },
+    "podStatus.TerminationHistory": {
+      "type": "object",
+      "properties": {
+        "instanceID": {
+          "type": "string"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "terminatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-friendly explanation for termination.\n"
+        },
+        "containers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/podStatus.ContainerTerminationHistory"
+          }
+        }
+      },
+      "required": [
+        "instanceID",
+        "startedAt",
+        "terminatedAt"
+      ]
+    },
+    "podStatus.PodStatus": {
+      "description": "Pod status communicates the lifecycle phase of the pod, current instance and container\nstatus, and recent termination status history.\n",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/strings.PathId"
+        },
+        "spec": {
+          "description": "The latest version of the pod specification (that has the same pod ID).\n",
+          "$ref": "#/definitions/pod.Pod"
+        },
+        "status": {
+          "$ref": "#/definitions/podStatus.PodState"
+        },
+        "statusSince": {
+          "type": "string",
+          "description": "Time at which the status code was last modified.\n",
+          "format": "date-time"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-friendly explanation for reason of the current status.\n"
+        },
+        "instances": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/podStatus.PodInstanceStatus"
+          }
+        },
+        "terminationHistory": {
+          "type": "array",
+          "description": "List of most recent instance terminations.\nTODO(jdef) determine how many items might show up here; current thinking is .. not many\n",
+          "items": {
+            "$ref": "#/definitions/podStatus.TerminationHistory"
+          }
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "Time that this status object was last checked and updated (even if nothing changed)\n",
+          "format": "date-time"
+        },
+        "lastChanged": {
+          "type": "string",
+          "description": "Time that this status object was last modified (some aspect of status did change)\n",
+          "format": "date-time"
+        }
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "spec",
+        "status",
+        "statusSince",
+        "lastUpdated",
+        "lastChanged"
+      ]
+    },
+    "queue.UnusedOffer": {
+      "properties": {
+        "offer": {
+          "description": "The offer that could not be used.",
+          "$ref": "#/definitions/queue.offer.Offer"
+        },
+        "reason": {
+          "type": "array",
+          "description": "The reasons why this offer can not be used.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "when this offer has been processed",
+          "format": "date-time"
+        }
+      },
+      "type": "object",
+      "required": [
+        "offer",
+        "reason",
+        "timestamp"
+      ]
+    },
+    "queue.DeclinedOfferStep": {
+      "properties": {
+        "reason": {
+          "type": "string"
+        },
+        "declined": {
+          "type": "number",
+          "format": "int32"
+        },
+        "processed": {
+          "type": "number",
+          "format": "int32"
+        }
+      },
+      "type": "object",
+      "required": [
+        "reason",
+        "declined",
+        "processed"
+      ]
+    },
+    "queue.ProcessedOffersSummary": {
+      "properties": {
+        "processedOffersCount": {
+          "type": "number",
+          "description": "The number of processed offers for this launch attempt.",
+          "format": "int32"
+        },
+        "unusedOffersCount": {
+          "type": "number",
+          "description": "The number of unused offers for this launch attempt.",
+          "format": "int32"
+        },
+        "lastUnusedOfferAt": {
+          "type": "string",
+          "description": "Point in time when the last unused offer has been processed.",
+          "format": "date-time"
+        },
+        "lastUsedOfferAt": {
+          "type": "string",
+          "description": "Point in time when the last used offer has been processed.",
+          "format": "date-time"
+        },
+        "rejectSummaryLastOffers": {
+          "type": "array",
+          "description": "Summarizes the reasons for not using offers for all last offers.\nThis summary accumulates all processed offers by only taking the last offer per agent into account.\n",
+          "items": {
+            "$ref": "#/definitions/queue.DeclinedOfferStep"
+          }
+        },
+        "rejectSummaryLaunchAttempt": {
+          "type": "array",
+          "description": "Summarizes the reasons for not using offers for the launch attempt of this run specification.\nThis summary accumulates all processed offers since the start of the launch attempt.\n",
+          "items": {
+            "$ref": "#/definitions/queue.DeclinedOfferStep"
+          }
+        }
+      },
+      "type": "object",
+      "required": [
+        "processedOffersCount",
+        "unusedOffersCount"
+      ]
+    },
+    "queue.QueueDelay": {
+      "properties": {
+        "timeLeftSeconds": {
+          "type": "number",
+          "description": "The number of seconds to wait, before the next launch attempt is started.",
+          "format": "int64"
+        },
+        "overdue": {
+          "type": "boolean",
+          "description": "true, if this run spec is backed off. Otherwise false."
+        }
+      },
+      "type": "object",
+      "required": [
+        "timeLeftSeconds",
+        "overdue"
+      ]
+    },
+    "queue.QueueObject": {
+      "properties": {
+        "count": {
+          "type": "number",
+          "description": "The number of instances left to launch.",
+          "format": "int32"
+        },
+        "delay": {
+          "description": "If a runspec has failed to often the launch will be delayed. See backoff to tune this behavior.",
+          "$ref": "#/definitions/queue.QueueDelay"
+        },
+        "since": {
+          "type": "string",
+          "description": "point in time since Marathon has started to launch tasks.",
+          "format": "date-time"
+        },
+        "processedOffersSummary": {
+          "description": "Statistics for processed offers.",
+          "$ref": "#/definitions/queue.ProcessedOffersSummary"
+        },
+        "lastUnusedOffers": {
+          "type": "array",
+          "description": "Last N unused offers, where N can be configured via xxx.",
+          "items": {
+            "$ref": "#/definitions/queue.UnusedOffer"
+          },
+          "x-annotation-app.pragma.forceOptional": ""
+        }
+      },
+      "type": "object",
+      "required": [
+        "count",
+        "since",
+        "processedOffersSummary"
+      ]
+    },
+    "queue.QueueApp": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/queue.QueueObject"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "app": {
+              "$ref": "#/definitions/app.App"
+            }
+          },
+          "required": [
+            "app"
+          ]
+        }
+      ]
+    },
+    "queue.QueuePod": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/queue.QueueObject"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "pod": {
+              "$ref": "#/definitions/pod.Pod"
+            }
+          },
+          "required": [
+            "pod"
+          ]
+        }
+      ]
+    },
+    "queue.QueueItem": {
+      "type": "object"
+    },
+    "queue.Queue": {
+      "properties": {
+        "queue": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/queue.QueueItem"
+          }
+        }
+      },
+      "type": "object"
+    },
+    "app.readiness.ReadinessCheck": {
+      "type": "object",
+      "description": "Query these readiness checks to determine if a task is ready to serve requests.\n",
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "readinessCheck",
+          "description": "The name used to identify this readiness check",
+          "minLength": 1
+        },
+        "protocol": {
+          "default": "HTTP",
+          "$ref": "#/definitions/strings.HttpScheme"
+        },
+        "path": {
+          "default": "/",
+          "example": "/path/to/health.",
+          "description": "Path to endpoint exposed by the task that will provide readiness status.\n",
+          "minLength": 1,
+          "$ref": "#/definitions/strings.Path"
+        },
+        "portName": {
+          "default": "http-api",
+          "example": "http-api",
+          "description": "Name of the port to query as described in the portDefinitions.\n",
+          "$ref": "#/definitions/strings.LegacyName"
+        },
+        "intervalSeconds": {
+          "type": "integer",
+          "default": 30,
+          "description": "Number of seconds to wait between readiness checks.\n",
+          "minimum": 0,
+          "format": "int32"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 10,
+          "description": "Number of seconds after which a health check is considered a failure\nregardless of the response.\nMust be smaller than intervalSeconds.\n",
+          "minimum": 1,
+          "format": "int32"
+        },
+        "httpStatusCodesForReady": {
+          "type": "array",
+          "description": "The HTTP(s) status codes to treat as 'ready'",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 999,
+            "format": "int32"
+          },
+          "minItems": 1,
+          "x-annotation-app.pragma.forceOptional": ""
+        },
+        "preserveLastResponse": {
+          "type": "boolean",
+          "default": false,
+          "description": "If and only if true, preserve the last readiness check responses and\nexpose them in the API as part of a deployment.\n"
+        }
+      }
+    },
+    "pod.resources.Resources": {
+      "type": "object",
+      "description": "Resource Allocations",
+      "properties": {
+        "cpus": {
+          "type": "number",
+          "default": 1,
+          "example": 0.1,
+          "description": "The number of CPU shares this pod needs per instance. This number does not have to be integer, but can be a fraction.",
+          "minimum": 0.001,
+          "format": "double"
+        },
+        "mem": {
+          "type": "number",
+          "default": 128,
+          "example": 512,
+          "description": "The amount of memory in MB that is needed for the pod instance",
+          "minimum": 0.001,
+          "format": "double"
+        },
+        "disk": {
+          "type": "number",
+          "default": 0,
+          "example": 0.2,
+          "description": "How much disk space is needed for this application. This number does not have to be an integer, but can be a fraction.",
+          "minimum": 0,
+          "format": "double"
+        },
+        "gpus": {
+          "type": "integer",
+          "default": 0,
+          "example": 1,
+          "description": "The amount of GPU cores that are needed for the pod",
+          "minimum": 0,
+          "format": "int32"
+        }
+      },
+      "required": [
+        "cpus",
+        "mem"
+      ]
+    },
+    "pod.resources.ExecutorResources": {
+      "type": "object",
+      "description": "Executor Resource Allocations. Same as Resources but reserved for the pod executor.",
+      "properties": {
+        "cpus": {
+          "type": "number",
+          "default": 0.1,
+          "example": 0.2,
+          "description": "The number of CPU shares this pod needs per instance for its executor. This number does not have to be integer, but can be a fraction.",
+          "minimum": 0.1,
+          "format": "double"
+        },
+        "mem": {
+          "type": "number",
+          "default": 32,
+          "example": 512,
+          "description": "The amount of memory in MB that is needed for the pod instance for the pod instance's executor",
+          "minimum": 32,
+          "format": "double"
+        },
+        "disk": {
+          "type": "number",
+          "default": 10,
+          "example": 50,
+          "description": "How much disk space is needed for for the executor. This number does not have to be an integer, but can be a fraction.",
+          "minimum": 10,
+          "format": "double"
+        }
+      }
+    },
+    "app.secrets.SecretDef": {
+      "type": "object",
+      "description": "A secret declaration",
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "The source of the secrets value.\nThe format dependes on the secret store\n",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "source"
+      ]
+    },
+    "app.secrets.Secrets": {
+      "type": "object",
+      "description": "A map with named secret declarations.\nThe key is used to reference the values from other places in the parent definition.\n",
+      "additionalProperties": {
+        "$ref": "#/definitions/app.secrets.SecretDef"
+      }
+    },
+    "strings.Name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+      "minLength": 1,
+      "maxLength": 63
+    },
+    "strings.LegacyName": {
+      "type": "string",
+      "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+      "minLength": 1
+    },
+    "strings.PathId": {
+      "type": "string",
+      "example": "/ops/audit",
+      "description": "Unique identifier for the pod consisting of a series of names separated by slashes.\nEach name must be at least 1 character and may only contain digits (`0-9`), dashes\n(`-`), dots (`.`), and lowercase letters (`a-z`). The name may not begin or end with a dash.\n",
+      "pattern": "^(\\/?((\\.\\.)|(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9]))?($|\\/))+$",
+      "minLength": 1
+    },
+    "strings.Uri": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "strings.Path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "strings.HttpScheme": {
+      "type": "string",
+      "description": "The http scheme to use",
+      "enum": [
+        "HTTP",
+        "HTTPS"
+      ]
+    },
+    "strings.ReadMode": {
+      "type": "string",
+      "enum": [
+        "RO",
+        "RW"
+      ]
+    },
+    "strings.NetworkProtocol": {
+      "type": "string",
+      "default": "tcp",
+      "description": "Protocol of the port (tcp, udp)",
+      "enum": [
+        "tcp",
+        "udp",
+        "udp,tcp"
+      ]
+    },
+    "strings.TaskLostBehavior": {
+      "type": "string",
+      "default": "WAIT_FOREVER",
+      "description": "When Marathon receives a TASK_LOST status update indicating that the\nagent running the task is gone, this property defines whether Marathon\nwill launch the task on another node or not. Defaults to WAIT_FOREVER\"\n",
+      "enum": [
+        "WAIT_FOREVER",
+        "RELAUNCH_AFTER_TIMEOUT"
+      ]
+    },
+    "app.unreachableStrategy.UnreachableStrategy": {
+      "type": "object"
+    },
+    "app.unreachableStrategy.UnreachableDisabled": {
+      "type": "string",
+      "default": "disabled",
+      "enum": [
+        "disabled"
+      ]
+    },
+    "app.unreachableStrategy.UnreachableEnabled": {
+      "type": "object",
+      "properties": {
+        "inactiveAfterSeconds": {
+          "type": "integer",
+          "default": 300,
+          "description": "If an instance is unreachable for longer than inactiveAfter seconds it is marked\nas inactive. This will trigger a new instance launch. The original task is not\nexpunged yet. Must be less than expungeAfterSeconds.\n\nThe default value is set to 5 minutes (300 seconds).\n",
+          "minimum": 1,
+          "format": "int64"
+        },
+        "expungeAfterSeconds": {
+          "type": "integer",
+          "default": 600,
+          "description": "If an instance is unreachable for longer than unreachableExpungeAfter seconds it will be expunged.  That means\nit will be killed if it ever comes back. Instances are usually marked as unreachable before they are expunged\nbut they don't have to. This value is required to be greater than inactiveAfterSeconds.\n\nThe default value is set to 10 minutes (600 seconds).\n",
+          "minimum": 1,
+          "format": "int64"
+        }
+      }
+    },
+    "app.versionInfo.VersionInfo": {
+      "type": "object",
+      "description": "Detailed version information",
+      "properties": {
+        "lastScalingAt": {
+          "type": "string",
+          "description": "Contains the timestamp of the last change to this pod which was not simply a scaling or restarting configuration",
+          "format": "date-time"
+        },
+        "lastConfigChangeAt": {
+          "type": "string",
+          "description": "Contains the timestamp of the last change including changes like scaling or restarting.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "lastScalingAt",
+        "lastConfigChangeAt"
+      ]
+    },
+    "pod.volumes.HostVolume": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The name of the volume to reference.",
+          "$ref": "#/definitions/strings.Name"
+        },
+        "host": {
+          "type": "string",
+          "description": "Absolute path of the file or directory on the agent, or else the relative\npath of the directory in the executor's sandbox.\nHost volumes are useful for mapping directories that exist on the agent apriori,\nor within the executor sandbox. No resources (Mesos or otherwise) are allocated for\nthese types of volumes.\n"
+        }
+      },
+      "required": [
+        "name",
+        "host"
+      ]
+    },
+    "pod.volumes.EphemeralVolume": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The name of the volume to reference.",
+          "$ref": "#/definitions/strings.Name"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "pod.volumes.VolumeMount": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The name of the volume to reference.",
+          "$ref": "#/definitions/strings.Name"
+        },
+        "mountPath": {
+          "description": "The path inside the container at which the volume is mounted.",
+          "$ref": "#/definitions/strings.Path"
+        },
+        "readOnly": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "mountPath"
+      ]
+    },
+    "pod.volumes.PersistentVolumeType": {
+      "type": "string",
+      "description": "The type of mesos disk resource to use; defaults to root",
+      "enum": [
+        "root",
+        "path",
+        "mount"
+      ]
+    },
+    "pod.volumes.PersistentVolume": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/pod.volumes.PersistentVolumeType"
+        },
+        "size": {
+          "type": "integer",
+          "description": "The size of the persistence volume in MB.",
+          "minimum": 0,
+          "format": "int64"
+        },
+        "maxSize": {
+          "type": "integer",
+          "description": "For `mount` mesos disk resources, the optional maximum size of an exclusive mount volume to be considered.\n",
+          "minimum": 0,
+          "format": "int64"
+        },
+        "constraints": {
+          "type": "array",
+          "description": "Constraints restricting where new persistent volumes should be created.\nCurrently, it is only possible to constrain the path of the disk resource by regular expression.\n",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/app.constraints.VolumeConstraint"
+          }
+        }
+      },
+      "required": [
+        "size"
+      ]
+    },
+    "pod.volumes.ExternalVolume": {
+      "type": "object",
+      "properties": {
+        "size": {
+          "type": "integer",
+          "description": "The size of the external volume in GiB",
+          "minimum": 0,
+          "format": "int64"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the volume"
+        },
+        "provider": {
+          "type": "string",
+          "description": "The name of the volume provider"
+        },
+        "options": {
+          "description": "Provider specific volume configuration options",
+          "x-annotation-app.pragma.omitEmpty": "",
+          "$ref": "#/definitions/app.label.KVLabels"
+        }
+      }
+    },
+    "pod.volumes.AppDockerVolume": {
+      "type": "object",
+      "properties": {
+        "containerPath": {
+          "type": "string",
+          "description": "The path of the volume in the container",
+          "minLength": 1
+        },
+        "hostPath": {
+          "type": "string",
+          "description": "The path of the volume on the host",
+          "minLength": 1
+        },
+        "mode": {
+          "description": "Possible values are RO for ReadOnly and RW for Read/Write",
+          "$ref": "#/definitions/strings.ReadMode"
+        }
+      },
+      "required": [
+        "containerPath",
+        "hostPath",
+        "mode"
+      ]
+    },
+    "pod.volumes.AppPersistentVolume": {
+      "type": "object",
+      "properties": {
+        "containerPath": {
+          "type": "string",
+          "description": "The path of the volume in the container",
+          "minLength": 1
+        },
+        "persistent": {
+          "$ref": "#/definitions/pod.volumes.PersistentVolume"
+        },
+        "mode": {
+          "description": "Possible values are RO for ReadOnly and RW for Read/Write",
+          "$ref": "#/definitions/strings.ReadMode"
+        }
+      },
+      "required": [
+        "containerPath",
+        "persistent",
+        "mode"
+      ]
+    },
+    "pod.volumes.AppExternalVolume": {
+      "type": "object",
+      "properties": {
+        "containerPath": {
+          "type": "string",
+          "description": "The path of the volume in the container",
+          "minLength": 1
+        },
+        "external": {
+          "$ref": "#/definitions/pod.volumes.ExternalVolume"
+        },
+        "mode": {
+          "description": "Possible values are RO for ReadOnly and RW for Read/Write",
+          "$ref": "#/definitions/strings.ReadMode"
+        }
+      },
+      "required": [
+        "containerPath",
+        "external",
+        "mode"
+      ]
+    },
+    "pod.volumes.AppSecretVolume": {
+      "type": "object",
+      "properties": {
+        "containerPath": {
+          "type": "string",
+          "description": "The path of the secret in the container",
+          "minLength": 1
+        },
+        "secret": {
+          "type": "string",
+          "description": "References the secret that is used by this volume",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "containerPath",
+        "secret"
+      ]
+    },
+    "pod.volumes.AppVolume": {
+      "type": "object"
+    },
+    "pod.volumes.PodSecretVolume": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the pod level volume",
+          "minLength": 1
+        },
+        "secret": {
+          "type": "string",
+          "description": "References the secret that is used by this volume",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name",
+        "secret"
+      ]
+    },
+    "pod.volumes.PodVolume": {
+      "type": "object"
+    }
+  }
+}
